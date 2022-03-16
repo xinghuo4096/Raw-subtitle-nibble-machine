@@ -1,0 +1,3 @@
+[submodule "SrtMergeBox"]
+	path = SrtMergeBox
+	url = https://github.com/xinghuo4096/SrtMergeBox.git
