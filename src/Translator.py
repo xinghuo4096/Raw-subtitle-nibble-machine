@@ -15,7 +15,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from Srt import Srt, load_srt_fromfile
 import chardet
-
+#TODO 继续修改doc
 SENCTENCE_END_MARK = (r'[\w ]+[?.!]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
 CLEAR_MARK = r'[!?.]?\s+'
