@@ -1,3 +1,13 @@
+'''
+翻译
+
+Raises:
+    Exception: _description_
+    Exception: _description_
+
+Returns:
+    _type_: _description_
+'''
 import copy
 import json
 import re
@@ -127,10 +137,14 @@ languages = dict({
 
 
 class Translator:
+    '''
+    翻译
+    '''
 
     def __init__(self):
         pass
 
+    @staticmethod
     def make_fanyi_packge(full_sentences: list):
         '''
         make_fanyi_packge 短句子打包为翻译引擎一次可以识别的最大量包
@@ -165,7 +179,17 @@ class Translator:
 
         return fanyitexts
 
+    @staticmethod
     def make_fanyi_dict(google_fanyi_json) -> dict:
+        '''
+        制作字典
+
+        Args:
+            google_fanyi_json (_type_): _description_
+
+        Returns:
+            dict: _description_
+        '''
         fanyijson = json.loads(google_fanyi_json)
         fanyi_dict = dict(
             zip([x[1].strip('\n') for x in fanyijson[0]],
@@ -173,7 +197,18 @@ class Translator:
 
         return fanyi_dict
 
+    @staticmethod
     def translate_byte_dict(subcnen, fdict) -> list:
+        '''
+        查字典的方法翻译
+
+        Args:
+            subcnen (_type_): _description_
+            fdict (_type_): _description_
+
+        Returns:
+            list: _description_
+        '''
         err_text = []
         for item in subcnen.subblocks:
             for st1 in item.sentences:
@@ -192,17 +227,40 @@ class Translator:
 
 
 class Media:
+    '''
+    影视剧集
+    '''
 
     def __init__(self, detail: str):
         self.detail = detail
         self.subtitles = list()
 
     def add_subtitle(self, language: str, subtitle_fname: str):
+        '''
+        增加一个语言的字幕
+
+        Args:
+            language (str): _description_
+            subtitle_fname (str): _description_
+
+        Returns:
+            _type_: _description_
+        '''
         sub = Subtitle(language, subtitle_fname)
         self.subtitles.append(sub)
         return sub
 
     def add_language_subtitle(self, language: str, index=0):
+        '''
+        增加一种语言的字幕，其他部分从旧字幕deepcopy。
+
+        Args:
+            language (str): _description_
+            index (int, optional): _description_. Defaults to 0.
+
+        Returns:
+            _type_: _description_
+        '''
         sub = copy.deepcopy(self.subtitles[index])
         sub.language = language
         self.subtitles.append(sub)
@@ -210,6 +268,9 @@ class Media:
 
 
 class Subtitle:
+    '''
+    字幕。比如英语en，或者中文zh-cn
+    '''
 
     def __init__(self, language: str, subtitle_fname: str):
         self.subtitle_fname = subtitle_fname
@@ -220,11 +281,20 @@ class Subtitle:
         self.subblocks = [SubBlock(x) for x in subs]
 
     def get_sentences_text(self) -> list:
+        '''
+        得到字幕中所有句子文本
+
+        Returns:
+            list: _description_
+        '''
         slist = [x.get_sentences_text() for x in self.subblocks]
         slist = list(filter(None, slist))
         return slist
 
     def make_sentence(self):
+        '''
+         解析字幕中的句子。
+        '''
         merge_strs = list()
         merge_subblocks = list()
         for item in self.subblocks:
@@ -286,10 +356,10 @@ class Subtitle:
                 merge_strs = list()
                 merge_subblocks = list()
         # 最后一句。
+        item = self.subblocks[-1]
         if len(merge_strs) > 0:
             if len(merge_strs) == 1:
                 st1 = NormalSentence(merge_strs[0])
-
                 #sentence object link
                 st1.object_link([item])
                 #subblock object link
@@ -307,17 +377,42 @@ class Subtitle:
             merge_subblocks = list()
 
 
-
 class SubBlock(Srt):
+    '''
+    字幕块类似
+
+    ```text
+    1
+    0:1:45,380 --> 0:1:48,880
+    -测试-1-测试-0:1:45,380-0:1:48,880
+    ```
+    Args:
+        Srt (_type_): _description_
+    '''
 
     def __init__(self, srt: Srt):
+        '''
+        从传入的srt对象，初始化。
+
+        Args:
+            srt (Srt): _description_
+        '''
+        Srt.__init__(self, srt.index, '0:1:45,380 --> 0:1:48,880', srt.text)
         self.index = srt.index
         self.start_time = srt.start_time
         self.end_time = srt.end_time
         self.text = self.clear_subtitle_text(srt.text)
-        self.sentences = None
+
+        self.sentences = list()
 
     def get_sentences_text(self):
+        '''
+        得到包含句子的文本
+
+        Returns:
+            _type_: _description_
+        '''
+        assert isinstance(self.sentences, list)
         tlist = [x.text for x in self.sentences if x.text.strip()]
         if len(tlist) > 0:
             return '\n'.join(tlist)
@@ -339,9 +434,9 @@ class SubBlock(Srt):
         '''
         return re.sub(RE_CLEAR, SubBlock.match_clear, str1)
 
+    @staticmethod
     def match_clear(match):
         assert isinstance(match, re.Match)
-        a = match.span()
         return (match.group()[0])
 
 
@@ -351,17 +446,23 @@ class Sentence(object):
     '''
 
     def __init__(self, text=''):
-
         self.text = text
+        self.subblocks = list()
 
     def object_link(self, subblocks: list):
+        '''
+        设置对象链接UML
+
+        Args:
+            subblocks (list): _description_
+        '''
         self.subblocks = subblocks
 
 
 class MergeSentence(Sentence):
     '''
     可以合并的句子。类似
-    
+
         54
         00:03:01,190 --> 00:03:02,500
         After our session,
@@ -373,7 +474,7 @@ class MergeSentence(Sentence):
         56
         00:03:06,260 --> 00:03:07,330
         that I was ready.
-    
+
     Args:
         Sentence (_type_): _description_
     '''
@@ -383,7 +484,7 @@ class MergeSentence(Sentence):
          MergeSentence合并的句，翻译后，需要给没有结尾符号的subblock的text赋值。
          1个MergeSentence实例对应多个subblock实例，都要赋值。
         Args:
-            mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制. Defaults to 'splite'.            
+            mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制. Defaults to 'splite'.
         '''
 
         blk_count = len(self.subblocks)
@@ -397,8 +498,6 @@ class MergeSentence(Sentence):
         for i in range(blk_count):
             subs[i].text = split_text[i]
         return
-
-    pass
 
 
 class SpliteSentence(Sentence):
@@ -419,6 +518,7 @@ class TranslationEngine:
     def __init__(self, ):
         pass
 
+    @staticmethod
     def detect_code(detect_str: str) -> tuple:
         s = chardet.detect(detect_str)
         str1 = ''
@@ -428,6 +528,7 @@ class TranslationEngine:
             raise Exception(detect_str[0:10] + '... error.' + s['confidence'])
         return str1, s['encoding']
 
+    @staticmethod
     def fanyi_google(
             qtext=quote('test', 'utf-8'), from_language='en',
             to_language='zh-CN'):
