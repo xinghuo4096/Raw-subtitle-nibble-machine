@@ -436,7 +436,16 @@ class SubBlock(Srt):
 
     @staticmethod
     def match_clear(match):
+        '''
+        用于拆分subblock，的re.sub
+        Args:
+            match (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        '''
         assert isinstance(match, re.Match)
+        # pylint:disable=(superfluous-parens)
         return (match.group()[0])
 
 
@@ -550,7 +559,7 @@ class TranslationEngine:
                             detect_ret['confidence'])
         return str1, detect_ret['encoding']
 
-    def translation(self):
+    def translate(self):
         '''
         抽象函数,不用abc.abstractmethod
         '''
@@ -566,10 +575,10 @@ class GoogleFree(TranslationEngine):
     '''
 
     # pylint:disable=arguments-differ
-    def translation(self,
-                    qtext=quote('test', 'utf-8'),
-                    from_language='en',
-                    to_language='zh-CN') -> str:
+    def translate(self,
+                  qtext=quote('test', 'utf-8'),
+                  from_language='en',
+                  to_language='zh-CN') -> str:
         '''
         用谷歌翻译
 
@@ -587,6 +596,7 @@ class GoogleFree(TranslationEngine):
 
         if len(qtext) < 1:
             qtext = quote('test', 'utf-8')
+        # pylint: disable=consider-using-f-string
         url = 'https://translate.googleapis.com/translate_a/single?client=gtx&\
             sl={language1}&tl={language2}&dt=t&q={text}'.\
             format(language1=from_language, language2=to_language, text=qtext)

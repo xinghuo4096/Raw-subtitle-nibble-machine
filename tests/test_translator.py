@@ -6,8 +6,9 @@ Raises:
     Exception: _description_
 '''
 from Srt import save_srt
-from Translator import (Media, MergeSentence, NormalSentence, Sentence,
-                        SubBlock, Subtitle, TranslationEngine, Translator,
+from translator import GoogleFree
+from translator import (Media, MergeSentence, NormalSentence, Sentence,
+                        SubBlock, Subtitle, Translator,
                         save_file)
 
 
@@ -21,7 +22,7 @@ def test_media():
     '''
 
     movie1 = Media('movie 1')
-    movie1.add_subtitle('en', 'tests/test_srt1.srt')
+    movie1.add_subtitle('en', 'indata/test_srt1.srt')
 
     assert movie1.subtitles[0].language == 'en'
 
@@ -96,12 +97,13 @@ def test_media():
     assert blk == st1.subblocks[2]
     assert blk == st1.subblocks[-1]
     assert blk.text == 'that I was ready.' != st1.text
+# pylint:disable=(line-too-long)
     assert st1.text == 'After our session,I had the sudden clarity that we were ready,that I was ready.'
 
     sub = movie1.subtitles[0]
     assert isinstance(sub, Subtitle)
     textlist = sub.get_sentences_text()
-
+# pylint:disable=(line-too-long)
     fanyi_text_for_test = (
         '[[["谢谢你。\\n","Thank you.\\n",null,null,10,null,null,null,[[null,true]]],\
         ["这一次，谢谢。\\n","This time, thank you.\\n",null,null,3,null,null,[[]],\
@@ -177,9 +179,10 @@ def test_media():
     textlist = sub.get_sentences_text()
     textpack = Translator.make_fanyi_packge(textlist)
     fdict = dict()
-    #这里是一组包，需要一个一个的翻译。
+# 这里是一组包，需要一个一个的翻译。
     for item in textpack:
-        fanyiret = TranslationEngine.fanyi_google(item, 'auto')
+        translate1 = GoogleFree()
+        fanyiret = translate1.translate(item, 'auto')
         fanyi_text, fanyi_code = fanyiret
         dict1 = Translator.make_fanyi_dict(fanyi_text)
         fdict.update(dict1)
@@ -194,7 +197,7 @@ def test_media():
     assert len(subcn.subblocks) > 100
 
     save_srt('outdata/a12en_new_cn.srt', subcn.subblocks)
-
+# pylint:disable=consider-using-f-string
     strlist = ['{0}----{1}'.format(x, fdict[x]) for x in list(fdict)]
 
     save_file('outdata/a12en_new_cn_fdict.txt', '\n'.join(strlist))
