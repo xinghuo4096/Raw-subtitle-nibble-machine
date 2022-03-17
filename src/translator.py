@@ -312,7 +312,7 @@ class Subtitle:
             find = re.findall(RE_FIND, item.text)
 
             if (len(find)) == 0:
-                #没有结束，需要merge
+                # 没有结束，需要merge
                 st1 = MergeSentence()
                 st1.object_link(merge_subblocks)
 
@@ -322,16 +322,16 @@ class Subtitle:
                 if len(merge_strs) == 1:
                     st1 = NormalSentence(merge_strs[0])
 
-                    #sentence object link
+                    # sentence object link
                     st1.object_link([item])
-                    #subblock object link
+                    # subblock object link
                     item.sentences = [st1]
                 elif len(merge_strs) > 1:
                     st1 = MergeSentence(''.join(merge_strs))
-                    #sentence object link
+                    # sentence object link
                     merge_subblocks.append(item)
                     st1.object_link(merge_subblocks)
-                    #subblock object link
+                    # subblock object link
                     item.sentences = [st1]
 
                 merge_strs = list()
@@ -340,17 +340,17 @@ class Subtitle:
                 if len(merge_strs) == 1:
                     st1 = NormalSentence(merge_strs[0])
 
-                    #sentence object link
+                    # sentence object link
                     st1.object_link([item])
-                    #subblock object link
+                    # subblock object link
                     item.sentences = [st1]
                 else:
                     st1 = MergeSentence(''.join(merge_strs))
 
-                    #sentence object link
+                    # sentence object link
                     merge_subblocks.append(item)
                     st1.object_link(merge_subblocks)
-                    #subblock object link
+                    # subblock object link
                     item.sentences = [st1]
 
                 merge_strs = list()
@@ -360,17 +360,17 @@ class Subtitle:
         if len(merge_strs) > 0:
             if len(merge_strs) == 1:
                 st1 = NormalSentence(merge_strs[0])
-                #sentence object link
+                # sentence object link
                 st1.object_link([item])
-                #subblock object link
+                # subblock object link
                 item.sentences = [st1]
             else:
                 st1 = MergeSentence(''.join(merge_strs))
 
-                #sentence object link
+                # sentence object link
                 merge_subblocks.append(item)
                 st1.object_link(merge_subblocks)
-                #subblock object link
+                # subblock object link
                 item.sentences = [st1]
 
             merge_strs = list()
@@ -484,7 +484,8 @@ class MergeSentence(Sentence):
          MergeSentence合并的句，翻译后，需要给没有结尾符号的subblock的text赋值。
          1个MergeSentence实例对应多个subblock实例，都要赋值。
         Args:
-            mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制. Defaults to 'splite'.
+            mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制.
+            Defaults to 'splite'.
         '''
 
         blk_count = len(self.subblocks)
@@ -564,7 +565,7 @@ class GoogleFree(TranslationEngine):
         TranslationEngine (_type_): _description_
     '''
 
-    #pylint:disable=arguments-differ
+    # pylint:disable=arguments-differ
     def translation(self,
                     qtext=quote('test', 'utf-8'),
                     from_language='en',
@@ -575,7 +576,8 @@ class GoogleFree(TranslationEngine):
         用的是免费的版本，5000字符限制。
 
         Args:
-            str1 (str, optional): 待翻译文本，应该quote(text, 'utf-8'). Defaults to 'test'.]
+            str1 (str, optional): 待翻译文本，应该quote(text, 'utf-8').
+            Defaults to 'test'.]
             from_language (str, optional): 字幕原始语言. Defaults to 'en'.
             to_language (str, optional): 翻译后的语言. Defaults to 'zh-CN'.
 
@@ -585,12 +587,14 @@ class GoogleFree(TranslationEngine):
 
         if len(qtext) < 1:
             qtext = quote('test', 'utf-8')
-        url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl={language1}&tl={language2}&dt=t&q={text}'.format(
-            language1=from_language, language2=to_language, text=qtext)
+        url = 'https://translate.googleapis.com/translate_a/single?client=gtx&\
+            sl={language1}&tl={language2}&dt=t&q={text}'.\
+            format(language1=from_language, language2=to_language, text=qtext)
 
         headers = {
             "User-Agent":
-            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/"
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
+                (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/"
         }
         request = Request(url, headers=headers)
         request.add_header("Connection", "keep-alive")
