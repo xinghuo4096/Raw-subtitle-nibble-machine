@@ -103,22 +103,12 @@ def test_media():
     sub = movie1.subtitles[0]
     assert isinstance(sub, Subtitle)
     textlist = sub.get_sentences_text()
-# pylint:disable=(line-too-long)
-    fanyi_text_for_test = (
-        '[[["谢谢你。\\n","Thank you.\\n",null,null,10,null,null,null,[[null,true]]],\
-        ["这一次，谢谢。\\n","This time, thank you.\\n",null,null,3,null,null,[[]],\
-        [[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],\
-        ["好吧，我得走了。\\n","Okay.I gotta go.\\n",null,null,3,null,null,[[]],\
-        [[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],\
-        ["我正在去见瓦格斯的路上。\\n","I\'m on my way to meet Wags.\\n",null,null,3,null,null,[[]],\
-        [[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],\
-        ["开始筹资。\\n","Starting a capital raise.\\n",null,null,3,null,null,[[]],\
-        [[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["会议结束后，我突然明白我们准备好了，我准备好了。\\n","After our session,I had the sudden clarity that we were ready,that I was ready.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["去拿他们。\\n","Go get \'em.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我将会。\\n","I will.\\n",null,null,1,null,null,null,[[null,true]]],["- 你是怎么进去的？ - 凭直觉。\\n","- How\'d you step into it?- On a hunch.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是付钱给警察让问题消失的人。这就是我在这里所做的。\\n","I\'m the one who pays off the copsto make the problem go away.That\'s what I do here.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是那个付清警察的人我突然明白我们已经准备好了，",\
-        "I\'m the one who pays off the copsI had the sudden clarity that we were ready,",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]]]]],\
-        null,"en",null,null,null,1,[],[["en"],null,[1],["en"]]]', 'utf-8')
+# pylint:disable=line-too-long
+    fanyi_text_for_test = ('[[["谢谢你。\\n","Thank you.\\n",null,null,10,null,null,null,[[null,true]]],["这一次，谢谢。\\n","This time, thank you.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["好吧，我得走了。\\n","Okay.I gotta go.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我正在去见瓦格斯的路上。\\n","I\'m on my way to meet Wags.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["开始筹资。\\n","Starting a capital raise.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["会议结束后，我突然明白我们准备好了，我准备好了。\\n","After our session,I had the sudden clarity that we were ready,that I was ready.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["去拿他们。\\n","Go get \'em.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我将会。\\n","I will.\\n",null,null,1,null,null,null,[[null,true]]],["- 你是怎么进去的？ - 凭直觉。\\n","- How\'d you step into it?- On a hunch.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是付钱给警察以解决问题的人。这就是我在这里所做的。\\n","I\'m the one who pays off the cops to make the problem go away.That\'s what I do here.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是那个为警察还清的人我突然明白我们已经准备好了，","I\'m the one who pays off the cops I had the sudden clarity that we were ready,",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]]]]],null,"en",null,null,null,1,[],[["en"],null,[1],["en"]]]', 'utf-8')
     textpack = Translator.make_fanyi_packge(textlist)
+    translate1 = GoogleFree()
+# # fanyi_text_for_test  # translate1.translate(textpack[0], 'auto')
     fanyi_text, fanyi_code = fanyi_text_for_test
-    # # fanyi_text_for_test  # TranslationEngine.fanyi_google( textpack[0], 'auto'    )
 
     assert fanyi_code == 'utf-8'
     assert fanyi_text == fanyi_text_for_test[0]
@@ -134,7 +124,7 @@ def test_media():
     assert len(subcn.subblocks) == 15
     blks = subcn.subblocks
     assert blks[0].text == '谢谢你。'
-    assert blks[2].text == '好的。我要走了'
+    assert blks[2].text == '好吧，我得走了。'
 
     assert blks[5].text == '会议结束后，'
     assert blks[6].text == '我突然明白我们准备好了，'
@@ -146,25 +136,27 @@ def test_media():
     assert subcn == movie1.subtitles[2]
     assert isinstance(subcn, Subtitle)
 
-    err_texts = Translator.translate_byte_dict(subcn, fdict)
+    err_texts = Translator.translate_byte_dict(subcn, fdict, 'nosplite')
     if err_texts:
         raise Exception('err_texts.')
     assert len(subcn.subblocks) == 15
     blks = subcn.subblocks
     assert blks[0].text == '谢谢你。'
-    assert blks[2].text == '好的。我要走了'
+    assert blks[2].text == '好吧，我得走了。'
 
     assert blks[5].text == '会议结束后，我突然明白我们准备好了，我准备好了。'
     assert blks[6].text == '会议结束后，我突然明白我们准备好了，我准备好了。'
     assert blks[7].text == '会议结束后，我突然明白我们准备好了，我准备好了。'
-    assert blks[9].text == '会议结束后，我突然明白我们准备好了，我准备好了。'
     assert blks[9].text == '我将会。'
+    assert blks[12].text == '我是付钱给警察以解决问题的人。这就是我在这里所做的。'
+    assert blks[13].text == '我是那个为警察还清的人我突然明白我们已经准备好了，'
+    assert blks[14].text == '我是那个为警察还清的人我突然明白我们已经准备好了，'
 
     save_srt('outdata/test_srt1_new_cnen.srt', subcn.subblocks)
 
     #
     movie1 = Media('movie 2')
-    movie1.add_subtitle('en', 'tests/a12en.srt')
+    movie1.add_subtitle('en', 'indata/a12en.srt')
     assert movie1.subtitles[0].language == 'en'
 
     sub = movie1.subtitles[0]

@@ -13,7 +13,7 @@ import json
 import re
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from Srt import Srt, load_srt_fromfile
+from Srt import Srt, detect_code, load_srt_fromfile
 import chardet
 
 SENCTENCE_END_MARK = (r'[\w ]+[?.!]')
@@ -179,6 +179,44 @@ class Translator:
 
         return fanyitexts
 
+    def glossary_before(self, texts: str, fname) -> str:
+        '''
+        翻译前的glossary处理.utf-8
+        如:
+        Tom Cruise
+        阿汤哥
+        Args:
+            str1 (str): _description_
+            fname (_type_): _description_
+
+        Returns:
+            str: _description_
+        '''
+        file1 = open(fname, 'rb')
+        buffer = file1.read()
+        file1.close()
+        str1 = detect_code(buffer)[0]
+        return texts+str1
+
+    def glossary_after(self, texts: str, fname) -> str:
+        '''
+        翻译后的glossary处理.utf-8
+        如:
+        Tom Cruise
+        阿汤哥
+        Args:
+            str1 (str): _description_
+            fname (_type_): _description_
+
+        Returns:
+            str: _description_
+        '''
+        file1 = open(fname, 'rb')
+        buffer = file1.read()
+        file1.close()
+        str1 = detect_code(buffer)[0]
+        return texts+str1
+
     @staticmethod
     def make_fanyi_dict(google_fanyi_json) -> dict:
         '''
@@ -198,13 +236,17 @@ class Translator:
         return fanyi_dict
 
     @staticmethod
-    def translate_byte_dict(subcnen, fdict) -> list:
+    def translate_byte_dict(subcnen, fdict, mode_='splite') -> list:
         '''
         查字典的方法翻译
 
+        如果是MergeSentence合并的句，翻译后，需要给没有结尾符号的subblock的text赋值。
+        1个MergeSentence实例对应多个subblock实例，都要赋值。
+        mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制.
         Args:
             subcnen (_type_): _description_
             fdict (_type_): _description_
+            mode (str, optional): 拆分模式，默认是splite，其他模式就直接复制.
 
         Returns:
             list: _description_
@@ -220,7 +262,7 @@ class Translator:
                         if isinstance(st1, SpliteSentence):
                             item.text = fanyi_text
                         if isinstance(st1, MergeSentence):
-                            st1.splite_fanyi(fanyi_text)
+                            st1.splite_fanyi(fanyi_text, mode=mode_)
                     else:
                         err_text.append("fanyi error." + st1.text)
         return err_text
@@ -596,10 +638,9 @@ class GoogleFree(TranslationEngine):
 
         if len(qtext) < 1:
             qtext = quote('test', 'utf-8')
-        # pylint: disable=consider-using-f-string
-        url = 'https://translate.googleapis.com/translate_a/single?client=gtx&\
-            sl={language1}&tl={language2}&dt=t&q={text}'.\
-            format(language1=from_language, language2=to_language, text=qtext)
+# pylint: disable=consider-using-f-string,line-too-long
+        url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl={language1}&tl={language2}&dt=t&q={text}'.format(
+            language1=from_language, language2=to_language, text=qtext)
 
         headers = {
             "User-Agent":
