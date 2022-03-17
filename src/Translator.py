@@ -15,7 +15,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from Srt import Srt, load_srt_fromfile
 import chardet
-#TODO 继续修改doc2
+
 SENCTENCE_END_MARK = (r'[\w ]+[?.!]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
 CLEAR_MARK = r'[!?.]?\s+'
@@ -510,28 +510,65 @@ class SpliteSentence(Sentence):
 
 
 class NormalSentence(Sentence):
-    pass
+    '''
+    普通句子。只有一个结束符在句子末尾。
+
+    Args:
+        Sentence (_type_): _description_
+    '''
 
 
 class TranslationEngine:
+    '''
+    翻译引擎
+    '''
 
     def __init__(self, ):
         pass
 
     @staticmethod
     def detect_code(detect_str: str) -> tuple:
-        s = chardet.detect(detect_str)
-        str1 = ''
-        if s['confidence'] > 0.9:
-            str1 = detect_str.decode(s['encoding'], 'ignore')
-        else:
-            raise Exception(detect_str[0:10] + '... error.' + s['confidence'])
-        return str1, s['encoding']
+        '''
+        检测字符串编码
 
-    @staticmethod
-    def fanyi_google(
-            qtext=quote('test', 'utf-8'), from_language='en',
-            to_language='zh-CN'):
+        Args:
+            detect_str (str): _description_
+
+        Raises:
+            Exception: _description_
+
+        Returns:
+            tuple: _description_
+        '''
+        detect_ret = chardet.detect(detect_str)
+        str1 = ''
+        if detect_ret['confidence'] > 0.9:
+            str1 = detect_str.decode(detect_ret['encoding'], 'ignore')
+        else:
+            raise Exception(detect_str[0:10] + '... error.' +
+                            detect_ret['confidence'])
+        return str1, detect_ret['encoding']
+
+    def translation(self):
+        '''
+        抽象函数,不用abc.abstractmethod
+        '''
+        raise Exception(type(self) + 'translation().call.')
+
+
+class GoogleFree(TranslationEngine):
+    '''
+    google free translation
+
+    Args:
+        TranslationEngine (_type_): _description_
+    '''
+
+    #pylint:disable=arguments-differ
+    def translation(self,
+                    qtext=quote('test', 'utf-8'),
+                    from_language='en',
+                    to_language='zh-CN') -> str:
         '''
         用谷歌翻译
 
@@ -564,19 +601,23 @@ class TranslationEngine:
         return strlist
 
 
-class Gooogle(TranslationEngine):
-
-    def __init__(self, ):
-        pass
-
-
 class TranslationDict:
+    '''
+    翻译
+    '''
 
     def __init__(self):
-        pass
+        self.dict = list()
 
 
 def save_file(fname, savestr: str):
+    '''
+    保存文件。utf-8格式
+
+    Args:
+        fname (_type_): _description_
+        savestr (str): _description_
+    '''
     ff1 = open(file=fname, mode='w', buffering=1000, encoding='utf-8')
     ff1.write(savestr)
     ff1.close()
