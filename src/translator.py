@@ -145,7 +145,7 @@ class Translator:
         pass
 
     @staticmethod
-    def make_fanyi_packge(full_sentences: list):
+    def make_fanyi_packge(full_sentences: list, string_max=4988):
         '''
         make_fanyi_packge 短句子打包为翻译引擎一次可以识别的最大量包
         一行不能超过5000字符，超过报错。
@@ -161,10 +161,10 @@ class Translator:
         fanyitexts = []
         length = 0
         full_sentence = []
-        size_limite = 4988
+        size_limite = string_max
         for item in full_sentences:
             text = quote(item + '\n', 'utf-8')
-            if len(text) > 4988:
+            if len(text) > string_max:
                 raise Exception('error:to long.' + item.text)
             if (length + len(text)) < size_limite:
                 length += len(text)
@@ -178,44 +178,6 @@ class Translator:
             fanyitexts.append(''.join(full_sentence))
 
         return fanyitexts
-
-    def glossary_before(self, texts: str, fname) -> str:
-        '''
-        翻译前的glossary处理.utf-8
-        如:
-        Tom Cruise
-        阿汤哥
-        Args:
-            str1 (str): _description_
-            fname (_type_): _description_
-
-        Returns:
-            str: _description_
-        '''
-        file1 = open(fname, 'rb')
-        buffer = file1.read()
-        file1.close()
-        str1 = detect_code(buffer)[0]
-        return texts+str1
-
-    def glossary_after(self, texts: str, fname) -> str:
-        '''
-        翻译后的glossary处理.utf-8
-        如:
-        Tom Cruise
-        阿汤哥
-        Args:
-            str1 (str): _description_
-            fname (_type_): _description_
-
-        Returns:
-            str: _description_
-        '''
-        file1 = open(fname, 'rb')
-        buffer = file1.read()
-        file1.close()
-        str1 = detect_code(buffer)[0]
-        return texts+str1
 
     @staticmethod
     def make_fanyi_dict(google_fanyi_json) -> dict:
@@ -638,6 +600,8 @@ class GoogleFree(TranslationEngine):
 
         if len(qtext) < 1:
             qtext = quote('test', 'utf-8')
+
+
 # pylint: disable=consider-using-f-string,line-too-long
         url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl={language1}&tl={language2}&dt=t&q={text}'.format(
             language1=from_language, language2=to_language, text=qtext)
@@ -658,11 +622,63 @@ class GoogleFree(TranslationEngine):
 
 class TranslationDict:
     '''
-    翻译
+    翻译词典
     '''
 
     def __init__(self):
         self.dict = list()
+        self.glossary = dict()
+
+    def glossary_load(self, fname):
+        '''
+        加载glossary.utf-880
+        类似：
+
+        Tom Cruise
+        阿汤哥
+
+        Args:
+            fname (_type_): _description_
+        '''
+        file1 = open(fname, 'rb')
+        buffer = file1.read()
+        file1.close()
+        str1 = detect_code(buffer)[0]
+        self.glossary = str1.splite['\n']
+
+    def glossary_after(self, texts: str) -> str:
+        '''
+        翻译前的glossary处理.utf-8
+        如:
+
+        Tom Cruise
+        阿汤哥
+
+        Args:
+            str1 (str): _description_
+            fname (_type_): _description_
+
+        Returns:
+            str: _description_
+        '''
+        return texts
+
+    def glossary_before(self, texts: str) -> str:
+        '''
+        翻译前的glossary处理.utf-8
+        如:
+
+        Tom Cruise
+        阿汤哥
+
+        Args:
+            str1 (str): _description_
+            fname (_type_): _description_
+
+        Returns:
+            str: _description_
+        '''
+        return texts
 
 
 def save_file(fname, savestr: str):
