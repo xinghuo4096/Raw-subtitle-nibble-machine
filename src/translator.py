@@ -279,6 +279,7 @@ class Subtitle:
     def __init__(self, language: str, subtitle_fname: str):
         self.subtitle_fname = subtitle_fname
         self.language = language
+        self.language_detail = languages[language]
 
         subs = list()
         subs = load_srt_fromfile(self.subtitle_fname)
