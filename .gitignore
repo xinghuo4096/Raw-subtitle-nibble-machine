@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 outdata/*
-indata/a12en.srt
+indata/a12.en.srt

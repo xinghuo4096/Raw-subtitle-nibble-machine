@@ -11,10 +11,12 @@ Returns:
 import copy
 import json
 import re
+import time
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from Srt import Srt, detect_code, load_srt_fromfile
+
 import chardet
+from Srt import Srt, detect_code, load_srt_fromfile
 
 SENCTENCE_END_MARK = (r'[\w ]+[?.!]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
@@ -583,7 +585,7 @@ class GoogleFree(TranslationEngine):
     def translate(self,
                   qtext=quote('test', 'utf-8'),
                   from_language='en',
-                  to_language='zh-CN') -> str:
+                  to_language='zh-CN', sleeptime=30) -> tuple:
         '''
         用谷歌翻译
 
@@ -594,9 +596,10 @@ class GoogleFree(TranslationEngine):
             Defaults to 'test'.]
             from_language (str, optional): 字幕原始语言. Defaults to 'en'.
             to_language (str, optional): 翻译后的语言. Defaults to 'zh-CN'.
+            sleeeptimne:休眠时间默认30秒，默认每30秒调用一次谷歌翻译。
 
         Returns:
-            str: 翻译后语言
+              tuple:googlejson,翻译后语言
         '''
 
         if len(qtext) < 1:
@@ -618,6 +621,7 @@ class GoogleFree(TranslationEngine):
         response = urlopen(request, timeout=30)
         rawdata = response.read()
         strlist = TranslationEngine.detect_code(rawdata)
+        time.sleep(sleeptime)
         return strlist
 
 
