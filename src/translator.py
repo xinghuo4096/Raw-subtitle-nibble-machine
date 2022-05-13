@@ -18,7 +18,7 @@ from urllib.request import Request, urlopen
 import chardet
 from Srt import Srt, detect_code, load_srt_fromfile
 
-SENCTENCE_END_MARK = (r'[\w ]+[\[\]?.!♪]')
+SENCTENCE_END_MARK = (r'[\w ]+[\[\]*()?.!♪]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
 CLEAR_MARK = r'[!?.]?\s+'
 RE_CLEAR = re.compile(CLEAR_MARK)

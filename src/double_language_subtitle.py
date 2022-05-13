@@ -55,7 +55,7 @@ def make_double_lanague_subtitle(media: str,
     # 这里是一组包，需要一个一个的翻译。
     timecount = 0
     for item in textpack:
-        sleeptime = 30
+        sleeptime = 3
         messagefun(f'{(len(textpack)-timecount)*sleeptime}')
         timecount += 1
         fanyiret = translate1.translate(item, 'auto', 'zh-CN', sleeptime)
@@ -78,8 +78,8 @@ def make_double_lanague_subtitle(media: str,
     save_file(dict_text, '\n'.join(strlist))
 
 
-make_double_lanague_subtitle(media='movie a10-co',
-                             from_sub='indata/a10-co.srt',
-                             to_sub='outdata/a10-co.cn.srt',
-                             err_text='outdata/a10-co.err.txt',
-                             dict_text='outdata/a10-co.dict.txt')
+make_double_lanague_subtitle(media='movie a',
+                             from_sub='z:/tests/a.srt',
+                             to_sub='z:/tests/a.cn.srt',
+                             err_text='z:/tests/a.err.txt',
+                             dict_text='z:/tests/a.dict.txt')
