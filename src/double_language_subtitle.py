@@ -78,8 +78,8 @@ def make_double_lanague_subtitle(media: str,
     save_file(dict_text, '\n'.join(strlist))
 
 
-make_double_lanague_subtitle(media='movie a10-co',
-                             from_sub='indata/a10-co.srt',
-                             to_sub='outdata/a10-co.cn.srt',
-                             err_text='outdata/a10-co.err.txt',
-                             dict_text='outdata/a10-co.dict.txt')
+make_double_lanague_subtitle(media='movie test',
+                             from_sub='indata/test_srt1.srt',
+                             to_sub='outdata/test_srt1.cn.srt',
+                             err_text='outdata/test_srt1.err.txt',
+                             dict_text='outdata/test_srt1.dict.txt')
