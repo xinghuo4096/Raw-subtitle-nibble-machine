@@ -84,7 +84,9 @@ def make_double_lanague_subtitle(media: str,
 CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
 CLEAR_TEXT_MARK2 = r'[]'
 CLEAR_TEXT_MARK3 = r''
-cc = re.sub(CLEAR_TEXT_MARK1, '', 'a[aaa]b[ccc ]c[aad ddd]d')
+
+CLEAR_TEXT_MARK4 = r'<i>.+?music.+?</i>'
+str1 = re.search(CLEAR_TEXT_MARK4, '<i> upbeat music playing </i>')
 
 
 for i in range(1, 11):
@@ -98,6 +100,7 @@ for i in range(1, 11):
     for item in sub.subblocks:
         str1 = item.text
         str1 = re.sub(CLEAR_TEXT_MARK1, '', str1)
+        str1 = re.sub(CLEAR_TEXT_MARK4, '', str1)
         str1 = str1.replace(r'{\an8}', '')
         str1 = str1.replace('<i>', '')
         str1 = str1.replace('</i>', '')
