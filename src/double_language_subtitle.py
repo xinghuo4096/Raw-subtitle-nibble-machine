@@ -1,8 +1,11 @@
+from copy import deepcopy
 import datetime
-from Srt import save_srt
-from translator import GoogleFree
-from translator import (Media, MergeSentence, NormalSentence, Sentence,
-                        SubBlock, Subtitle, Translator, save_file, languages)
+import re
+
+from Srt import detect_code, load_srt_fromfile, reidnex, save_srt
+
+from translator import (GoogleFree, Media,  SubBlock, Subtitle, Translator, languages,
+                        save_file)
 
 
 def subtitle_message(message: str, **text):
@@ -78,8 +81,44 @@ def make_double_lanague_subtitle(media: str,
     save_file(dict_text, '\n'.join(strlist))
 
 
-make_double_lanague_subtitle(media='movie a',
-                             from_sub='z:/tests/a.srt',
-                             to_sub='z:/tests/a.cn.srt',
-                             err_text='z:/tests/a.err.txt',
-                             dict_text='z:/tests/a.dict.txt')
+CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
+CLEAR_TEXT_MARK2 = r'[]'
+CLEAR_TEXT_MARK3 = r''
+cc = re.sub(CLEAR_TEXT_MARK1, '', 'a[aaa]b[ccc ]c[aad ddd]d')
+
+
+for i in range(1, 11):
+    srtname = f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.srt'
+    srtname_en = f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.en.srt'
+    movie1 = Media(f'movie {i}')
+    movie1.add_subtitle('en', srtname)
+    sub = movie1.subtitles[0]
+    assert isinstance(sub, Subtitle)
+
+    for item in sub.subblocks:
+        str1 = item.text
+        str1 = re.sub(CLEAR_TEXT_MARK1, '', str1)
+        str1 = str1.replace(r'{\an8}', '')
+        str1 = str1.replace('<i>', '')
+        str1 = str1.replace('</i>', '')
+        str1 = str1.strip()
+        if not re.search(r'\w+', str1):
+            str1 = ''
+        item.text = str1
+
+    sub2 = list()
+    for item in sub.subblocks:
+        if item.text:
+            sub2.append(item)
+    reidnex(sub2)
+
+    save_srt(srtname_en, sub2)
+
+
+for i in range(1, 11):
+    print(i)
+    make_double_lanague_subtitle(media=f'movie {i}',
+                                 from_sub=f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.en.srt',
+                                 to_sub=f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.cn.srt',
+                                 err_text=f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.err.txt',
+                                 dict_text=f'z:/tests/1/The.Man.Who.Fell.to.Earth.S01E{i:0>2}.1080p.WEBRip.x265-RARBG.srt.dict.txt')
