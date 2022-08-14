@@ -1,0 +1,17 @@
+[Script Info]
+; {softname}
+; {softurl}
+Title: {title}
+Original Script: {Original_file}
+Script Updated By: {update_name}
+Update Details:{update_detial}
+ScriptType: v4.00+
+PlayResX: 384
+PlayResY: 288
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,方正黑体_GBK,20,&H00FFFFFF,&HF0000000,&H00000000,&H32000000,0,0,0,0,100,100,0,0,1,2,1,2,5,5,2,134
+
+[Events]
+Dialogue: 0,{start_time},{end_time},*Default,NPC1,0000,0000,0000,,{language1_subtitle_text}\N{\fn微软雅黑}{\b0}{\fs14}{\3c&H202020&}{\shad1}{language2_subtitle_text}
