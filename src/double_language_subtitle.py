@@ -1,11 +1,9 @@
-from copy import deepcopy
 import datetime
 import re
 
-from Srt import detect_code, load_srt_fromfile, merge_ass_tofile, reidnex, save_srt
+from Srt import reidnex, save_srt
 
-from translator import (GoogleFree, Media,  SubBlock, Subtitle, Translator, languages,
-                        save_file)
+from translator import (GoogleFree, Media,  Subtitle, Translator, save_file)
 
 
 def subtitle_message(message: str, **text):
@@ -86,8 +84,6 @@ def clear_subtitle():
     清除字幕里的特殊字符。
     '''
     CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
-    CLEAR_TEXT_MARK2 = r'[]'
-    CLEAR_TEXT_MARK3 = r''
 
     CLEAR_TEXT_MARK4 = r'<i>.+?music.+?</i>'
     str1 = re.search(CLEAR_TEXT_MARK4, '<i> upbeat music playing </i>')
