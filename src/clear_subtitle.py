@@ -33,6 +33,37 @@ def clear_subtile_fun1(fname1: str, fname2: str):
     save_srt(fname2, sub2)
 
 
+def clear_subtile_fun2(fname1: str, fname2: str):
+    '''
+    为字幕里包含'♪'字符时，字幕末尾加结束符'.'
+    如：-♪ Don't let me hear you sighin' ♪
+    处理为：-♪ Don't let me hear you sighin' ♪.
+
+    '''
+    TEXT_MARK = r'♪'
+
+    movie1 = Media(f'movie {fname1}')
+    movie1.add_subtitle('en', fname1)
+    sub = movie1.subtitles[0]
+    assert isinstance(sub, Subtitle)
+
+    for item in sub.subblocks:
+        str1 = item.text
+        if str1.find(TEXT_MARK) != -1:
+            str1 = str1.strip()
+            str1 = str1+'.'
+        if not re.search(r'\w+', str1):
+            str1 = ''
+        item.text = str1
+
+    sub2 = list()
+    for item in sub.subblocks:
+        if item.text:
+            sub2.append(item)
+    reidnex(sub2)
+    save_srt(fname2, sub2)
+
+
 def clear_subtitle():
     '''
     清除字幕里的特殊字符。

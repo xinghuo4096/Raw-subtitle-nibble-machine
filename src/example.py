@@ -1,4 +1,4 @@
-from clear_subtitle import clear_subtile_fun1
+from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
 from double_language_subtitle import make_double_lanague_subtitle
 
 
@@ -21,14 +21,14 @@ def mymain():
     '''
     单个处理
     '''
-    fname = 'z:/tests/a/Spin.Me.Round.2022.PROPER.1080p.WEBRip.x265-RARBG'
-    # clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
+    fname = 'z:/tests/a/Bodyguard.Seduction.2022.720p.HDTV.x264-OMICRON'
+    clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
+    clear_subtile_fun2(f'{fname}.en.2.srt', f'{fname}.en.3.srt')
     make_double_lanague_subtitle(media=f'movie {fname}',
-                                 from_sub=f'{fname}.en.2.srt',
+                                 from_sub=f'{fname}.en.3.srt',
                                  to_sub=f'{fname}.cn.srt',
                                  err_text=f'{fname}.err.txt',
                                  dict_text=f'{fname}.dict.txt')
 
 
-#
 mymain()
