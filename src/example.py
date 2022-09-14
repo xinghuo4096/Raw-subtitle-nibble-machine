@@ -1,5 +1,5 @@
 '''例子
-单个和多字幕处理的雷子
+单个和多字幕处理的例子
 '''
 from Srt import Srt, merge_ass_tofile
 from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
