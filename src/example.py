@@ -1,6 +1,7 @@
 '''例子
 单个和多字幕处理的雷子
 '''
+from Srt import Srt, merge_ass_tofile
 from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
 from double_language_subtitle import make_double_lanague_subtitle
 
@@ -32,6 +33,18 @@ def mymain():
                                  to_sub=f'{fname}.cn.srt',
                                  err_text=f'{fname}.err.txt',
                                  dict_text=f'{fname}.dict.txt')
+
+    merge_ass_tofile(
+        first_subtitle_fname=f'{fname}.cn.srt',
+        second_subtitle_fname=f'{fname}.en.3.srt',
+        new_subtitle_fname=f'{fname}.cnen.ass',
+        unalign_subtitle_fname=f'{fname}.unalgin.txt',
+        ass_template_fname='../SrtMergeBox/indata/ass_template_cn_en_1280.txt',
+        ass_head_fname='../SrtMergeBox/indata/ass_info_head_cn_en.txt',
+        mark1='',
+        mark2='',
+        mini_time=Srt.MINI_MERGE_TIME,
+        max_cnsubtitle=26)
 
 
 mymain()
