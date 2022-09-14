@@ -1,3 +1,6 @@
+'''例子
+单个和多字幕处理的雷子
+'''
 from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
 from double_language_subtitle import make_double_lanague_subtitle
 
@@ -21,7 +24,7 @@ def mymain():
     '''
     单个处理
     '''
-    fname = 'z:/tests/a/Bodyguard.Seduction.2022.720p.HDTV.x264-OMICRON'
+    fname = 'z:/tests/a/Emily.the.Criminal.2022.1080p.AMZN.WEB-DL.DDP5.1.H.264-SMURF'
     clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
     clear_subtile_fun2(f'{fname}.en.2.srt', f'{fname}.en.3.srt')
     make_double_lanague_subtitle(media=f'movie {fname}',

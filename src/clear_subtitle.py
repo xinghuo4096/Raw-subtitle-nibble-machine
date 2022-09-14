@@ -1,4 +1,6 @@
-
+"""字幕预处理
+一些字幕有特殊字符，需要其他预处理
+"""
 import re
 
 from Srt import reidnex, save_srt
@@ -9,8 +11,11 @@ from translator import Media, Subtitle
 def clear_subtile_fun1(fname1: str, fname2: str):
     '''
     清除字幕里的[]里面的字符，一般是声音或音乐的描述。如：[ Wind blowing ][ Sighs ]
+
+    清除字幕里的<i></i>，替换为空格。
     '''
     CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
+    CLEAR_TEXT_MARK2 = r'</*i>'
 
     movie1 = Media(f'movie {fname1}')
     movie1.add_subtitle('en', fname1)
@@ -20,6 +25,7 @@ def clear_subtile_fun1(fname1: str, fname2: str):
     for item in sub.subblocks:
         str1 = item.text
         str1 = re.sub(CLEAR_TEXT_MARK1, '', str1)
+        str1 = re.sub(CLEAR_TEXT_MARK2, ' ', str1)
         str1 = str1.strip()
         if not re.search(r'\w+', str1):
             str1 = ''
