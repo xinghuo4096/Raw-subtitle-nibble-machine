@@ -25,7 +25,7 @@ def mymain():
     '''
     单个处理
     '''
-    fname = 'z:/tests/a/test.srt'
+    fname = 'z:/tests/a/test_moveie'
     clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
     clear_subtile_fun2(f'{fname}.en.2.srt', f'{fname}.en.3.srt')
     make_double_lanague_subtitle(media=f'movie {fname}',
