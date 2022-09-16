@@ -25,7 +25,7 @@ def mymain():
     '''
     单个处理
     '''
-    fname = 'z:/tests/a/test_moveie'
+    fname = 'z:/tests/a/Breaking.2022.1080p.WEB-DL.DDP5.1.Atmos.H.264-CM'
     clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
     clear_subtile_fun2(f'{fname}.en.2.srt', f'{fname}.en.3.srt')
     make_double_lanague_subtitle(media=f'movie {fname}',
@@ -40,7 +40,7 @@ def mymain():
         new_subtitle_fname=f'{fname}.cnen.ass',
         unalign_subtitle_fname=f'{fname}.unalgin.txt',
         ass_template_fname='../SrtMergeBox/indata/ass_template_cn_en_1280.txt',
-        ass_head_fname='../SrtMergeBox/indata/ass_info_head_cn_en.txt',
+        ass_head_fname='../SrtMergeBox/indata/ass_info_head_cn_en_1280.txt',
         mark1='',
         mark2='',
         mini_time=Srt.MINI_MERGE_TIME,
