@@ -22,7 +22,7 @@ SENCTENCE_END_MARK = (r'[\w ]+[\[\]*()?.!♪]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
 CLEAR_MARK = r'[!?.]?\s+'
 RE_CLEAR = re.compile(CLEAR_MARK)
-CHINESE_MARK = r'[\w ]+[，。？]'
+CHINESE_MARK = r'[\w ]+[，。？]|[\w ]+……'
 RE_CHINESE_MARK = re.compile(CHINESE_MARK)
 languages = dict({
     'auto': 'auto',
@@ -585,7 +585,8 @@ class GoogleFree(TranslationEngine):
     def translate(self,
                   qtext=quote('test', 'utf-8'),
                   from_language='en',
-                  to_language='zh-CN', sleeptime=30) -> tuple:
+                  to_language='zh-CN',
+                  sleeptime=30) -> tuple:
         '''
         用谷歌翻译
 
@@ -631,8 +632,31 @@ class TranslationDict:
     '''
 
     def __init__(self):
-        self.dict = list()
+        self.dict = dict()
         self.glossary = dict()
+
+    def dict_load(self, fname):
+        '''
+        加载词典
+        类似：
+
+        hello
+        你好
+
+        Args:
+            fname (_type_): _description_
+        '''
+        file1 = open(fname, 'r', encoding='utf-8')
+        buffer = file1.readlines()
+        file1.close()
+
+        self.dict = {
+            buffer[x].rstrip(): buffer[x + 1].rstrip()
+            for x in range(0,
+                           len(buffer) - 1, 2)
+        }
+
+        return self.dict
 
     def glossary_load(self, fname):
         '''

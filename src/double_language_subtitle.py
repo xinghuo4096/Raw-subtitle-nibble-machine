@@ -2,7 +2,7 @@ import datetime
 
 from Srt import save_srt
 
-from translator import GoogleFree, Media, Subtitle, Translator, save_file
+from translator import GoogleFree, Media, Subtitle, TranslationDict, Translator, save_file
 
 
 def subtitle_message(message: str, **text):
@@ -24,7 +24,8 @@ def make_double_lanague_subtitle(media: str,
                                  dict_text: str,
                                  from_language: str = 'en',
                                  to_language: str = 'zh-CN',
-                                 messagefun=subtitle_message) -> str:
+                                 messagefun=subtitle_message,
+                                 use_dict: bool = False) -> str:
     '''
     _summary_
 
@@ -51,17 +52,22 @@ def make_double_lanague_subtitle(media: str,
     textpack = Translator.make_fanyi_packge(textlist)
 
     fdict = dict()
-    translate1 = GoogleFree()
-    # 这里是一组包，需要一个一个的翻译。
-    timecount = 0
-    for item in textpack:
-        sleeptime = 3
-        messagefun(f'{(len(textpack)-timecount)*sleeptime}')
-        timecount += 1
-        fanyiret = translate1.translate(item, 'auto', 'zh-CN', sleeptime)
-        fanyi_text, _ = fanyiret
-        dict1 = Translator.make_fanyi_dict(fanyi_text)
-        fdict.update(dict1)
+    if use_dict:
+        dict1 = TranslationDict()
+        dict1.dict_load(dict_text)
+        fdict = dict1.dict
+    else:
+        translate1 = GoogleFree()
+        # 这里是一组包，需要一个一个的翻译。
+        timecount = 0
+        for item in textpack:
+            sleeptime = 3
+            messagefun(f'{(len(textpack)-timecount)*sleeptime}')
+            timecount += 1
+            fanyiret = translate1.translate(item, 'auto', 'zh-CN', sleeptime)
+            fanyi_text, _ = fanyiret
+            dict1 = Translator.make_fanyi_dict(fanyi_text)
+            fdict.update(dict1)
 
     subcn = movie1.add_language_subtitle("zh-CN")
     assert subcn == movie1.subtitles[1]

@@ -14,7 +14,7 @@ def clear_subtile_fun1(fname1: str, fname2: str):
 
     清除字幕里的<i></i>，替换为空格。
     '''
-    CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
+    CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]|\([^\)]+?\)'
     CLEAR_TEXT_MARK2 = r'</*i>'
 
     movie1 = Media(f'movie {fname1}')
@@ -57,7 +57,7 @@ def clear_subtile_fun2(fname1: str, fname2: str):
         str1 = item.text
         if str1.find(TEXT_MARK) != -1:
             str1 = str1.strip()
-            str1 = str1+'.'
+            str1 = str1 + '.'
         if not re.search(r'\w+', str1):
             str1 = ''
         item.text = str1
