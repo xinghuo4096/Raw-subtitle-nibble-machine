@@ -1,13 +1,16 @@
 # Raw-subtitle-nibble-machine生肉啃食机
 
-Machine translation of subtitles carried in movie episodes to generate bilingual subtitles.
+Subtitle translation and bilingual subtitle creation tool.
 
-- Support most languages.Such as Chinese-English, Chinese-German, Chinese-Swedish.
+1. Translate subtitles in srt format that come with movie and episode files into other languages. Most languages are supported. For example Chinese-English, Chinese-German, Chinese-Swedish.
+  
+2. Combine subtitles in srt format from both languages to create bilingual subtitles in srt or ass format.
 
-Current engines.
+Current engines:
 
 1. Google Translate
-    *October 2, 2022 found Google Translate to close the service to China.
-    Available through proxy.*
 
+    *2 October 2022 found Google Translate closed for China.
+    Available via proxy.*
+  
 2. Baidu Translate
