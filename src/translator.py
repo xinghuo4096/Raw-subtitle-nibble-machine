@@ -617,7 +617,7 @@ class GoogleFree(TranslationEngine):
                 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/"
         }
         request = Request(url, headers=headers)
-        request.add_header("Connection", "keep-alive")
+        #request.add_header("Connection", "keep-alive")
         request.encoding = 'utf-8'
         response = urlopen(request, timeout=30)
         rawdata = response.read()
