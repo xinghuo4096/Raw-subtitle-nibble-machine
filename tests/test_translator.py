@@ -6,10 +6,9 @@ Raises:
     Exception: _description_
 '''
 from Srt import save_srt
-from translator import GoogleFree
+from translation_engine import GoogleFree, Baidufree
 from translator import (Media, MergeSentence, NormalSentence, Sentence,
-                        SubBlock, Subtitle, Translator,
-                        save_file)
+                        SubBlock, Subtitle, Translator, save_file)
 
 
 #TODO 需要整理 更新到translator
@@ -105,7 +104,9 @@ def test_media():
     assert isinstance(sub, Subtitle)
     textlist = sub.get_sentences_text()
     # pylint:disable=line-too-long
-    fanyi_text_for_test = ('[[["谢谢你。\\n","Thank you.\\n",null,null,10,null,null,null,[[null,true]]],["这一次，谢谢。\\n","This time, thank you.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["好吧，我得走了。\\n","Okay.I gotta go.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我正在去见瓦格斯的路上。\\n","I\'m on my way to meet Wags.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["开始筹资。\\n","Starting a capital raise.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["会议结束后，我突然明白我们准备好了，我准备好了。\\n","After our session,I had the sudden clarity that we were ready,that I was ready.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["去拿他们。\\n","Go get \'em.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我将会。\\n","I will.\\n",null,null,1,null,null,null,[[null,true]]],["- 你是怎么进去的？ - 凭直觉。\\n","- How\'d you step into it?- On a hunch.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是付钱给警察以解决问题的人。这就是我在这里所做的。\\n","I\'m the one who pays off the cops to make the problem go away.That\'s what I do here.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是那个为警察还清的人我突然明白我们已经准备好了，","I\'m the one who pays off the cops I had the sudden clarity that we were ready,",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]]]]],null,"en",null,null,null,1,[],[["en"],null,[1],["en"]]]', 'utf-8')
+    fanyi_text_for_test = (
+        '[[["谢谢你。\\n","Thank you.\\n",null,null,10,null,null,null,[[null,true]]],["这一次，谢谢。\\n","This time, thank you.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["好吧，我得走了。\\n","Okay.I gotta go.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我正在去见瓦格斯的路上。\\n","I\'m on my way to meet Wags.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["开始筹资。\\n","Starting a capital raise.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["会议结束后，我突然明白我们准备好了，我准备好了。\\n","After our session,I had the sudden clarity that we were ready,that I was ready.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["去拿他们。\\n","Go get \'em.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我将会。\\n","I will.\\n",null,null,1,null,null,null,[[null,true]]],["- 你是怎么进去的？ - 凭直觉。\\n","- How\'d you step into it?- On a hunch.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是付钱给警察以解决问题的人。这就是我在这里所做的。\\n","I\'m the one who pays off the cops to make the problem go away.That\'s what I do here.\\n",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]],[null,true]]],["我是那个为警察还清的人我突然明白我们已经准备好了，","I\'m the one who pays off the cops I had the sudden clarity that we were ready,",null,null,3,null,null,[[]],[[["041e86f75565b6341f86f9972f755ac9","en_zh_2021q4.md"]]]]],null,"en",null,null,null,1,[],[["en"],null,[1],["en"]]]',
+        'utf-8')
     textpack = Translator.make_fanyi_packge(textlist)
     translate1 = GoogleFree()
     # # fanyi_text_for_test  # translate1.translate(textpack[0], 'auto')

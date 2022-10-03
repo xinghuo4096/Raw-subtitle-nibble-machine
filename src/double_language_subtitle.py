@@ -2,7 +2,8 @@ import datetime
 
 from Srt import save_srt
 
-from translator import GoogleFree, Media, Subtitle, TranslationDict, Translator, save_file
+from translator import Media, Subtitle, TranslationDict, Translator, save_file
+from translation_engine import GoogleFree
 
 
 def subtitle_message(message: str, **text):
@@ -64,9 +65,10 @@ def make_double_lanague_subtitle(media: str,
             sleeptime = 3
             messagefun(f'{(len(textpack)-timecount)*sleeptime}')
             timecount += 1
-            fanyiret = translate1.translate(item, 'auto', 'zh-CN', sleeptime)
+            fanyiret = translate1.translate(item, from_language, to_language,
+                                            sleeptime)
             fanyi_text, _ = fanyiret
-            dict1 = Translator.make_fanyi_dict(fanyi_text)
+            dict1 = translate1.make_fanyi_dict(fanyi_text)
             fdict.update(dict1)
 
     subcn = movie1.add_language_subtitle("zh-CN")
