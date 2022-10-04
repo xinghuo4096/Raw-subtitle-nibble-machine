@@ -3,7 +3,7 @@ import datetime
 from Srt import save_srt
 
 from translator import Media, Subtitle, TranslationDict, Translator, save_file
-from translation_engine import GoogleFree
+from translation_engine import Baidufree, GoogleFree
 
 
 def subtitle_message(message: str, **text):
@@ -13,8 +13,10 @@ def subtitle_message(message: str, **text):
     Args:
         message (str): _description_
     '''
-    text = f'total time:{message},endtime:{datetime.datetime.now()+datetime.timedelta(seconds= int(message))}'
-    print(text)
+    time1 = datetime.datetime.now() + datetime.timedelta(seconds=int(message))
+
+    text1 = f'total time: {message} sec,endtime:{ time1.strftime("%Y-%m-%d %H:%M:%S")}'
+    print(text1)
     return
 
 
@@ -24,21 +26,26 @@ def make_double_lanague_subtitle(media: str,
                                  err_text: str,
                                  dict_text: str,
                                  from_language: str = 'en',
-                                 to_language: str = 'zh-CN',
+                                 to_language: str = 'zh',
                                  messagefun=subtitle_message,
-                                 use_dict: bool = False) -> str:
+                                 use_dict: bool = False,
+                                 translate_engner=Baidufree,
+                                 sleep_time=30) -> str:
     '''
-    _summary_
+    制作双语字幕
 
     Args:
-        media (_type_): _description_
-        from_sub (_type_): _description_
-        to_sub (_type_): _description_
-        err_text (_type_): _description_
-        dict_text (_type_): _description_
-        from_language (str, optional): _description_. Defaults to 'en'.
-        to_language (str, optional): _description_. Defaults to 'zh-CN'.
-        messagefun:消息回调
+        media (str): 电影名称
+        from_sub (str): 源字幕
+        to_sub (str): 目的字幕
+        err_text (str): 翻译中错误存储文件
+        dict_text (str): 词典文件
+        from_language (str, optional):源语言 Defaults to 'en'.
+        to_language (str, optional): 目的语言 Defaults to 'zh'.
+        messagefun (_type_, optional): 翻译过程中回调函数，提供翻译进度  Defaults to subtitle_message.
+        use_dict (bool, optional): 是否是词典翻译 Defaults to False.
+        translate_engner (_type_, optional): 翻译引擎 Defaults to Baidufree.
+        sleep_time (int, optional): 每用一次引擎，休眠时间，防止引擎拒绝 Defaults to 30.
 
     Returns:
         str: _description_
@@ -50,6 +57,9 @@ def make_double_lanague_subtitle(media: str,
     assert isinstance(sub, Subtitle)
     sub.make_sentence()
     textlist = sub.get_sentences_text()
+
+    tengine = translate_engner()
+
     textpack = Translator.make_fanyi_packge(textlist)
 
     fdict = dict()
@@ -58,17 +68,15 @@ def make_double_lanague_subtitle(media: str,
         dict1.dict_load(dict_text)
         fdict = dict1.dict
     else:
-        translate1 = GoogleFree()
         # 这里是一组包，需要一个一个的翻译。
         timecount = 0
         for item in textpack:
-            sleeptime = 3
-            messagefun(f'{(len(textpack)-timecount)*sleeptime}')
+            messagefun(f'{(len(textpack)-timecount)*sleep_time}')
             timecount += 1
-            fanyiret = translate1.translate(item, from_language, to_language,
-                                            sleeptime)
+            fanyiret = tengine.translate(item, from_language, to_language,
+                                         sleep_time)
             fanyi_text, _ = fanyiret
-            dict1 = translate1.make_fanyi_dict(fanyi_text)
+            dict1 = tengine.make_fanyi_dict(fanyi_text)
             fdict.update(dict1)
 
     subcn = movie1.add_language_subtitle("zh-CN")

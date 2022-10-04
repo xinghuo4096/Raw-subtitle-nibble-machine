@@ -13,6 +13,7 @@ import re
 from urllib.parse import quote
 
 from Srt import Srt, detect_code, load_srt_fromfile
+from translation_engine import Baidufree, GoogleFree, TranslationEngine
 
 SENCTENCE_END_MARK = (r'[\w ]+[\[\]*()?.!♪]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
@@ -143,7 +144,9 @@ class Translator:
         pass
 
     @staticmethod
-    def make_fanyi_packge(full_sentences: list, string_max=4988):
+    def make_fanyi_packge(full_sentences: list,
+                          string_max=4988,
+                          engine: TranslationEngine = Baidufree):
         '''
         make_fanyi_packge 短句子打包为翻译引擎一次可以识别的最大量包
         一行不能超过5000字符，超过报错。
@@ -161,7 +164,13 @@ class Translator:
         full_sentence = []
         size_limite = string_max
         for item in full_sentences:
-            text = quote(item + '\n', 'utf-8')
+
+            if engine is Baidufree:
+                text = item + '\n'
+            else:
+                if engine is GoogleFree:
+                    text = quote(item + '\n', 'utf-8')
+
             if len(text) > string_max:
                 raise Exception('error:to long.' + item.text)
             if (length + len(text)) < size_limite:
