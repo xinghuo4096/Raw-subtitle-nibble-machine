@@ -103,7 +103,7 @@ def mymain():
     '''
     单个处理
     '''
-    fname = 'z:/tests/a/Compulsion.S01E01.1080p.WEB.H264-GLHF'
+    fname = 'z:/tests/a/test.movie'
     clear_subtile_fun1(f'{fname}.en.srt', f'{fname}.en.2.srt')
     clear_subtile_fun2(f'{fname}.en.2.srt', f'{fname}.en.3.srt')
     make_double_lanague_subtitle(media=f'movie {fname}',
