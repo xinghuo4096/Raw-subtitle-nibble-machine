@@ -19,7 +19,7 @@ SENCTENCE_END_MARK = (r'[\w ]+[\[\]*()?.!♪]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
 CLEAR_MARK = r'[!?.]?\s+'
 RE_CLEAR = re.compile(CLEAR_MARK)
-CHINESE_MARK = r'[\w ]+[，。？]|[\w ]+……'
+CHINESE_MARK = r'[，。？]|……'
 RE_CHINESE_MARK = re.compile(CHINESE_MARK)
 languages = dict({
     'auto': 'auto',
@@ -482,7 +482,7 @@ class MergeSentence(Sentence):
         Sentence (_type_): _description_
     '''
 
-    def splite_fanyi(self, text: str, mode='splite'):
+    def splite_fanyi(self, text1: str, mode='splite'):
         '''
          MergeSentence合并的句，翻译后，需要给没有结尾符号的subblock的text赋值。
          1个MergeSentence实例对应多个subblock实例，都要赋值。
@@ -492,15 +492,27 @@ class MergeSentence(Sentence):
         '''
 
         blk_count = len(self.subblocks)
-        find = re.findall(RE_CHINESE_MARK, text)
-        split_text = [text] * blk_count
+        split_text = [text1] * blk_count
+
+        strlist1 = []
+        find = RE_CHINESE_MARK.search(text1)
+        str_begin = 0
+
+        while find:
+            strlist1.append(text1[str_begin:find.end()])
+            str_begin = find.end()
+            find = RE_CHINESE_MARK.search(text1, str_begin)
+        if str_begin < len(text1):
+            strlist1.append(text1[str_begin:])
+
         if mode.lower() == 'splite':
-            if len(find) == blk_count:
-                split_text = find
+            if len(strlist1) == blk_count:
+                split_text = strlist1
 
         subs = self.subblocks
         for i in range(blk_count):
             subs[i].text = split_text[i]
+
         return
 
 

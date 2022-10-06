@@ -5,7 +5,7 @@ import os
 from os import path
 
 
-def mkv_subtitle_extract():
+def mkv_subtitle_extract(extract: bool = True):
     '''
     提取mkv字幕
     
@@ -26,7 +26,7 @@ def mkv_subtitle_extract():
     
     '''
 
-    mpath = 'F:/1/test.dir/'
+    mpath = 'F:/1/Reginald.the.Vampire.S01E01.Dead.Weight.1080p.SYFY.WEBRip.AAC2.0.H264-PMP[rarbg]/'
     mkv_info = r'D:/Tools/Mkv/mkvtoolnix/mkvinfo.exe'
     mkv_extract = r'D:/Tools/Mkv/mkvtoolnix/mkvextract.exe'
     os.chdir(mpath)
@@ -37,9 +37,11 @@ def mkv_subtitle_extract():
             fext = os.path.splitext(item)[1]
             if fext == '.mkv':
                 os.system(f'{mkv_info} "{item}"')
-                extract_commondline = ' '.join(
-                    [mkv_extract, item, f'tracks  2:"{fname}.en.srt" '])
-                os.system(extract_commondline)
+                if extract:
+                    extract_commondline = ' '.join(
+                        [mkv_extract, item, f'tracks  2:"{fname}.en.srt" '])
+                    os.system(extract_commondline)
 
 
+mkv_subtitle_extract(False)
 mkv_subtitle_extract()
