@@ -1,5 +1,21 @@
 '''例子
 单个和多字幕处理的例子
+
+会出错的情况
+
+1. 句子太长，多数是歌词，
+需要手动修字幕，把歌词结尾加句号“.”
+
+2. 字幕文字部分，以数字开头
+比如，如下：
+```
+........year
+2000
+```
+需要修改srt文件里对于内容
+如修复为：
+`........year 2000`
+
 '''
 import os
 
@@ -66,9 +82,9 @@ def main_batch2():
     for item in flist:
 
         if os.path.isfile(item):
-            sub_type = 'sdh'
-            fname = item[:-8]
-            sub_ext = item[-7:-4]
+            sub_type = 'en'
+            fname = item[:-(3 + 2 + len(sub_type))]
+            sub_ext = item[-(4 + len(sub_type)):-4]
             fext = item[-3:]
 
             if fext == 'srt' and sub_ext == sub_type:
@@ -95,7 +111,7 @@ def main_batch2():
                     mini_time=Srt.MINI_MERGE_TIME,
                     max_cnsubtitle=26)
 
-                print(i, fname)
+                print(i, 'ok.', fname)
                 i = i + 1
 
 
