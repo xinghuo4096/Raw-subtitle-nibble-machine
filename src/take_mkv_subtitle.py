@@ -26,7 +26,7 @@ def mkv_subtitle_extract(extract: bool = True):
     
     '''
 
-    mpath = 'F:/1/Reginald.the.Vampire.S01E01.Dead.Weight.1080p.SYFY.WEBRip.AAC2.0.H264-PMP[rarbg]/'
+    mpath = 'F:/1/movie.dir/'
     mkv_info = r'D:/Tools/Mkv/mkvtoolnix/mkvinfo.exe'
     mkv_extract = r'D:/Tools/Mkv/mkvtoolnix/mkvextract.exe'
     os.chdir(mpath)
