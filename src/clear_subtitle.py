@@ -9,26 +9,30 @@ from translator import Media, Subtitle
 
 
 def clear_subtile_fun1(fname1: str, fname2: str):
-    '''
+    """
     清除字幕里的[]里面的字符，一般是声音或音乐的描述。如：[ Wind blowing ][ Sighs ]
 
     清除字幕里的<i></i>，替换为空格。
-    '''
-    CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]|\([^\)]+?\)'
-    CLEAR_TEXT_MARK2 = r'</*i>'
 
-    movie1 = Media(f'movie {fname1}')
-    movie1.add_subtitle('en', fname1)
+    清除字幕里的{\an8}，替换为空。
+    """
+    CLEAR_TEXT_MARK1 = r"\[[^\]]+?\]|\([^\)]+?\)"
+    CLEAR_TEXT_MARK2 = r"</*i>"
+    CLEAR_TEXT_MARK3 = r"{\\an8}"
+
+    movie1 = Media(f"movie {fname1}")
+    movie1.add_subtitle("en", fname1)
     sub = movie1.subtitles[0]
     assert isinstance(sub, Subtitle)
 
     for item in sub.subblocks:
         str1 = item.text
-        str1 = re.sub(CLEAR_TEXT_MARK1, '', str1)
-        str1 = re.sub(CLEAR_TEXT_MARK2, ' ', str1)
+        str1 = re.sub(CLEAR_TEXT_MARK1, "", str1)
+        str1 = re.sub(CLEAR_TEXT_MARK2, " ", str1)
+        str1 = re.sub(CLEAR_TEXT_MARK3, "", str1)
         str1 = str1.strip()
-        if not re.search(r'\w+', str1):
-            str1 = ''
+        if not re.search(r"\w+", str1):
+            str1 = ""
         item.text = str1
 
     sub2 = list()
@@ -40,16 +44,16 @@ def clear_subtile_fun1(fname1: str, fname2: str):
 
 
 def clear_subtile_fun2(fname1: str, fname2: str):
-    '''
+    """
     为字幕里包含'♪'字符时，字幕末尾加结束符'.'
     如：-♪ Don't let me hear you sighin' ♪
     处理为：-♪ Don't let me hear you sighin' ♪.
 
-    '''
-    TEXT_MARK = r'♪'
+    """
+    TEXT_MARK = r"♪"
 
-    movie1 = Media(f'movie {fname1}')
-    movie1.add_subtitle('en', fname1)
+    movie1 = Media(f"movie {fname1}")
+    movie1.add_subtitle("en", fname1)
     sub = movie1.subtitles[0]
     assert isinstance(sub, Subtitle)
 
@@ -57,9 +61,9 @@ def clear_subtile_fun2(fname1: str, fname2: str):
         str1 = item.text
         if str1.find(TEXT_MARK) != -1:
             str1 = str1.strip()
-            str1 = str1 + '.'
-        if not re.search(r'\w+', str1):
-            str1 = ''
+            str1 = str1 + "."
+        if not re.search(r"\w+", str1):
+            str1 = ""
         item.text = str1
 
     sub2 = list()
@@ -71,9 +75,9 @@ def clear_subtile_fun2(fname1: str, fname2: str):
 
 
 def clear_subtitle():
-    '''
+    """
     清除字幕里的特殊字符。
-    '''
+    """
     return
 
     # CLEAR_TEXT_MARK1 = r'\[[^\]]+?\]'
