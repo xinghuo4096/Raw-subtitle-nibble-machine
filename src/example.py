@@ -20,9 +20,9 @@
 import os
 
 from Srt import Srt, merge_ass_tofile
-from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
+from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2, make_subtile_glossary_fun1, make_subtile_glossary_fun2
 from double_language_subtitle import make_double_lanague_subtitle
-from translation_engine import Baidufree, GoogleFree
+from translation_engine import Baidufree
 
 
 def main_batch():
@@ -48,7 +48,8 @@ def main_batch():
             second_subtitle_fname=f"{fname}.en.3.srt",
             new_subtitle_fname=f"{fname}.cnen.ass",
             unalign_subtitle_fname=f"{fname}.unalgin.txt",
-            ass_template_fname=("../SrtMergeBox/indata" "/ass_template_cn_en_1280.txt"),
+            ass_template_fname=(
+                "../SrtMergeBox/indata" "/ass_template_cn_en_1280.txt"),
             ass_head_fname="../SrtMergeBox/indata/ass_info_head_cn_en_1280.txt",
             mark1="",
             mark2="",
@@ -88,23 +89,27 @@ def main_batch2():
         if os.path.isfile(item):
 
             fname = item[: -(3 + 2 + len(sub_type))]
-            sub_ext = item[-(4 + len(sub_type)) : -4]
+            sub_ext = item[-(4 + len(sub_type)): -4]
             fext = item[-3:]
 
             if fext == "srt" and sub_ext == sub_type:
-                clear_subtile_fun1(f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
+                clear_subtile_fun1(
+                    f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
                 clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
+                make_subtile_glossary_fun1(
+                    f"{fname}.en.3.srt", f"{fname}.en.4.srt", "glossary.txt")
                 make_double_lanague_subtitle(
                     media=f"movie {fname}",
-                    from_sub=f"{fname}.en.3.srt",
-                    to_sub=f"{fname}.cn.srt",
+                    from_sub=f"{fname}.en.4.srt",
+                    to_sub=f"{fname}.cn.1.srt",
                     err_text=f"{fname}.err.txt",
                     dict_text=f"{fname}.dict.txt",
                     translate_engner=Baidufree,
                 )
-
+                make_subtile_glossary_fun2(
+                    f"{fname}.cn.1.srt", f"{fname}.cn.2.srt", "glossary.txt")
                 merge_ass_tofile(
-                    first_subtitle_fname=f"{fname}.cn.srt",
+                    first_subtitle_fname=f"{fname}.cn.2.srt",
                     second_subtitle_fname=f"{fname}.en.3.srt",
                     new_subtitle_fname=f"{fname}.cnen.ass",
                     unalign_subtitle_fname=f"{fname}.unalgin.txt",
@@ -112,7 +117,7 @@ def main_batch2():
                         "../SrtMergeBox/indata" "/ass_template_cn_en_1280.txt"
                     ),
                     ass_head_fname=(
-                        "../SrtMergeBox/indata" "/ass_info_head_cn_en_1280.txt"
+                        "../SrtMergeBox/indata" "/ass_info_head_cn_en_1280_recovery.txt"
                     ),
                     mark1="",
                     mark2="",

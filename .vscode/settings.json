@@ -8,5 +8,9 @@
     "python.linting.enabled": true,
     "python.analysis.extraPaths": [
         "./SrtMergeBox/src"
-    ]
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "python.formatting.provider": "none"
 }

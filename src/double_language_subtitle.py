@@ -27,6 +27,7 @@ def make_double_lanague_subtitle(media: str,
                                  dict_text: str,
                                  from_language: str = 'en',
                                  to_language: str = 'zh',
+                                 glossary_file: str = '',
                                  messagefun=subtitle_message,
                                  use_dict: bool = False,
                                  translate_engner=Baidufree,
@@ -42,6 +43,7 @@ def make_double_lanague_subtitle(media: str,
         dict_text (str): 词典文件
         from_language (str, optional):源语言 Defaults to 'en'.
         to_language (str, optional): 目的语言 Defaults to 'zh'.
+        glossary_file:术语文件,
         messagefun (_type_, optional): 翻译过程中回调函数，提供翻译进度  Defaults to subtitle_message.
         use_dict (bool, optional): 是否是词典翻译 Defaults to False.
         translate_engner (_type_, optional): 翻译引擎 Defaults to Baidufree.

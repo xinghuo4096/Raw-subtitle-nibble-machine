@@ -9,6 +9,7 @@ Returns:
     _type_: _description_
 '''
 import copy
+import json
 import re
 from urllib.parse import quote
 
@@ -616,6 +617,23 @@ class TranslationDict:
             str: _description_
         '''
         return texts
+
+
+def glossary_do1(string, glossary_json):
+
+    for item in glossary_json:
+        old_value = item["old_value"]
+        new_value = f'a{hex(hash(item["old_value"]))}a'
+        string = re.sub(old_value, new_value, string)
+    return string
+
+
+def glossary_do2(string, glossary_json):
+    for item in glossary_json:
+        old_value = f'a{hex(hash(item["old_value"]))}a'
+        new_value = item["new_value"]
+        string = re.sub(old_value, new_value, string)
+    return string
 
 
 def save_file(fname, savestr: str):

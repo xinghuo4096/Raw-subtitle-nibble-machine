@@ -1,11 +1,14 @@
 """字幕预处理
 一些字幕有特殊字符，需要其他预处理
 """
+import json
+import os
+import pathlib
 import re
 
 from Srt import reidnex, save_srt
 
-from translator import Media, Subtitle
+from translator import Media, Subtitle, glossary_do1, glossary_do2
 
 
 def clear_subtile_fun1(fname1: str, fname2: str):
@@ -72,6 +75,44 @@ def clear_subtile_fun2(fname1: str, fname2: str):
             sub2.append(item)
     reidnex(sub2)
     save_srt(fname2, sub2)
+
+
+def make_subtile_glossary_fun1(fname1: str, fname2: str, glossary_file: str):
+    """
+    为字幕里处理术语fun1
+    """
+    json_data = '{}'
+
+    str1 = ''
+    with open(file=fname1, mode="r", buffering=1000, encoding="utf-8") as ff1:
+        str1 = ff1.read()
+
+    if os.path.isfile(glossary_file):
+        with open(glossary_file, encoding='utf-8') as file1:
+            json_data = json.load(file1)
+        str1 = glossary_do1(str1, json_data)
+
+    with open(file=fname2, mode="w", buffering=1000, encoding="utf-8") as ff1:
+        ff1.write(str1)
+
+
+def make_subtile_glossary_fun2(fname1: str, fname2: str, glossary_file: str):
+    """
+    为字幕里处理术语fun2
+    """
+    json_data = '{}'
+
+    str1 = ''
+    with open(file=fname1, mode="r", buffering=1000, encoding="utf-8") as ff1:
+        str1 = ff1.read()
+
+    if os.path.isfile(glossary_file):
+        with open(glossary_file, encoding='utf-8') as file1:
+            json_data = json.load(file1)
+        str1 = glossary_do2(str1, json_data)
+
+    with open(file=fname2, mode="w", buffering=1000, encoding="utf-8") as ff1:
+        ff1.write(str1)
 
 
 def clear_subtitle():

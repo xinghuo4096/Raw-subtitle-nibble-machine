@@ -49,7 +49,8 @@ class TranslationEngine:
         if detect_ret["confidence"] > 0.9:
             str1 = detect_str.decode(detect_ret["encoding"], "ignore")
         else:
-            raise Exception(detect_str[0:10] + "... error." + detect_ret["confidence"])
+            raise Exception(detect_str[0:10] +
+                            "... error." + detect_ret["confidence"])
         return str1, detect_ret["encoding"]
 
     def translate(self):
@@ -269,7 +270,9 @@ class Baidufree(TranslationEngine):
         url_v2transapi = "https://fanyi.baidu.com/v2transapi"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 \
-                (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/"
+                (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/",
+            "Acs-Token": "1661410972047_1668449431845_PuH6yxM4fr5fh13uzM6gX+pOyw85ZvjktITNFUcI+5F4Irx8SS+nzFeWP60g2jDM3g5WBsNy+4nEqBMPYF9D9Q/+H32BBgtQavbsTulNd9kmg9rBJya28ESweddKga0xeF03ZztY7OCIq0Mth+vOrxXXaAYorT/6No8kFIJlL0DpXlHLK30HvAcOKcuvWBmSQ8z5ZV9KOJ0x3r8qpkgyKCxpwcvt6OxAG2Uzm5MNaX+laVtQKIXxsCqx2CKXIJ7uE1jZB4xxURKNkdKged8lRqG97TehTYgf0SCjHlLenUeZUiLWmTDBi4qaKeUnQOT7FsF5gd+hGJQup+HUod9/uptg7AO8XLs9C6Lf+wqQQKM=",
+
         }
 
         session = requests.Session()
@@ -307,11 +310,15 @@ class Baidufree(TranslationEngine):
 
             response_dict = response.json()
 
-            time.sleep(sleeptime)
-
-            return response_dict, ""
         except Exception as err1:
             print(err1)
+
+        if 'errno' in response_dict:
+            raise ValueError(
+                (response_dict['errno'], response_dict['errmsg']))
+
+        time.sleep(sleeptime)
+        return response_dict, ""
 
     def baidu_json2text(self, baidu_json):
         """
@@ -336,5 +343,7 @@ class Baidufree(TranslationEngine):
         Returns:
             dict: _description_
         """
-        strlist = {x["src"]: x["dst"] for x in baidu_json["trans_result"]["data"]}
+
+        strlist = {x["src"]: x["dst"]
+                   for x in baidu_json["trans_result"]["data"]}
         return strlist

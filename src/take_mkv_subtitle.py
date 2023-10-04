@@ -26,7 +26,7 @@ def mkv_subtitle_extract(extract: bool = True):
 
     """
 
-    mpath = "F:/1/movie"
+    mpath = "O:/Devils.S02.1080p.NOW.WEBRip.DDP5.1.x264-NTb[rartv]"
     mkv_info = r"D:/Tools/Mkv/mkvtoolnix/mkvinfo.exe"
     mkv_extract = r"D:/Tools/Mkv/mkvtoolnix/mkvextract.exe"
     os.chdir(mpath)
@@ -42,7 +42,7 @@ def mkv_subtitle_extract(extract: bool = True):
                         [
                             mkv_extract,
                             item,
-                            f'tracks  2:"{fname}.en.srt" ',  # 3:"{fname}.sdh.srt"',
+                            f'tracks  2:"{fname}.en.srt"  3:"{fname}.sdh.srt"'
                         ]
                     )
                     os.system(extract_commondline)
