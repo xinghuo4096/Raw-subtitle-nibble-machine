@@ -20,7 +20,8 @@
 import os
 
 from Srt import Srt, merge_ass_tofile
-from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2, make_subtile_glossary_fun1, make_subtile_glossary_fun2
+from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
+from clear_subtitle import make_subtile_glossary_fun1, make_subtile_glossary_fun2
 from double_language_subtitle import make_double_lanague_subtitle
 from translation_engine import Baidufree
 

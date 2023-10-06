@@ -9,7 +9,6 @@ Returns:
     _type_: _description_
 '''
 import copy
-import json
 import re
 from urllib.parse import quote
 
@@ -620,17 +619,47 @@ class TranslationDict:
 
 
 def glossary_do1(string, glossary_json):
+    '''
+    术语支持。在翻译前用，保证术语不会被翻译，供glossary_do2处理。
+
+    Args:
+        string (_type_): 原始文本
+        glossary_json (_type_): 术语。格式为json，数组，第一个是原文，第二个是应该翻译后文本
+        类似
+        [
+            {"old_value": "TEST1", "new_value": "测试1组"},
+            {"old_value": "TEST22", "new_value": "测试22组"}
+        ]
+
+    Returns:
+        _type_: 处理后的文本。
+    '''
 
     for item in glossary_json:
         old_value = item["old_value"]
-        new_value = f'a{hex(hash(item["old_value"]))}a'
+        new_value = f'aa_{hex(hash(item["old_value"]))}_zz'
         string = re.sub(old_value, new_value, string)
     return string
 
 
 def glossary_do2(string, glossary_json):
+    '''
+    术语支持。在翻译后使用，将经过glossary_do1处理的后的文本里的标记翻译为术语。
+
+    Args:
+        string (_type_): 原始翻译的字符串
+        glossary_json (_type_): 术语格式为json，数组，第一个是原文，第二个是应该翻译后文本
+        类似
+        [
+            {"old_value": "TEST1", "new_value": "测试1组"},
+            {"old_value": "TEST22", "new_value": "测试22组"}
+        ]
+
+    Returns:
+        _type_: 处理后的文本。
+    '''
     for item in glossary_json:
-        old_value = f'a{hex(hash(item["old_value"]))}a'
+        old_value = f'aa_{hex(hash(item["old_value"]))}_zz'
         new_value = item["new_value"]
         string = re.sub(old_value, new_value, string)
     return string
