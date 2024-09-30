@@ -3,7 +3,8 @@ import datetime
 from Srt import save_srt
 
 from translator import Media, Subtitle, TranslationDict, Translator, save_file
-from translation_engine import Baidufree, GoogleFree
+from translation_engine import TranslationEngine
+from baidu_ce_fy import BaiduceEngine
 
 
 def subtitle_message(message: str, **text):
@@ -20,18 +21,20 @@ def subtitle_message(message: str, **text):
     return
 
 
-def make_double_lanague_subtitle(media: str,
-                                 from_sub: str,
-                                 to_sub: str,
-                                 err_text: str,
-                                 dict_text: str,
-                                 from_language: str = 'en',
-                                 to_language: str = 'zh',
-                                 glossary_file: str = '',
-                                 messagefun=subtitle_message,
-                                 use_dict: bool = False,
-                                 translate_engner=Baidufree,
-                                 sleep_time=30) -> str:
+def make_double_lanague_subtitle(
+    media: str,
+    from_sub: str,
+    to_sub: str,
+    err_text: str,
+    dict_text: str,
+    from_language: str = "en",
+    to_language: str = "zh",
+    glossary_file: str = "",
+    messagefun=subtitle_message,
+    use_dict: bool = False,
+    translate_engner: TranslationEngine = None,
+    sleep_time=30,
+) -> str:
     '''
     制作双语字幕
 
@@ -52,6 +55,10 @@ def make_double_lanague_subtitle(media: str,
     Returns:
         str: _description_
     '''
+
+    assert isinstance(translate_engner, TranslationEngine)
+
+    tengine = translate_engner
     movie1 = Media(media)
     movie1.add_subtitle(from_language, from_sub)
 
@@ -59,8 +66,6 @@ def make_double_lanague_subtitle(media: str,
     assert isinstance(sub, Subtitle)
     sub.make_sentence()
     textlist = sub.get_sentences_text()
-
-    tengine = translate_engner()
 
     textpack = Translator.make_fanyi_packge(textlist)
 
