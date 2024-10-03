@@ -12,5 +12,8 @@
   "Codegeex.Chat.fontSize": 15,
   "Codegeex.CandidateNum": "3 (slow)",
   "Codegeex.CompletionModel": "CodeGeeX Pro[Beta]",
-  "Codegeex.CommitMessageStyle": "ConventionalCommits"
+  "Codegeex.CommitMessageStyle": "ConventionalCommits",
+  "[json]": {
+    "editor.wordWrap": "on"
+  }
 }

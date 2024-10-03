@@ -1,0 +1,7 @@
+{
+  "model": "glm-4-plus",
+  "system_content": "你是电视剧对话翻译专家，你会结合上下文，结合剧情，完成翻译。\n-给出整理的的json结果，json包含序号和整理后的句子，如{1:\"你好\"}\n",
+  "top_p": 0.7,
+  "temperature": 0.95,
+  "max_tokens": 4095
+}
