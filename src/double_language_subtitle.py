@@ -67,6 +67,7 @@ def make_double_lanague_subtitle(
     sub.make_sentence()
     textlist = sub.get_sentences_text()
 
+    # TODO 增加短句子凑成翻译包大小的选择，为了AI翻译，需要将翻译包大小设置为2000
     textpack = Translator.make_fanyi_packge(textlist)
 
     fdict = dict()
