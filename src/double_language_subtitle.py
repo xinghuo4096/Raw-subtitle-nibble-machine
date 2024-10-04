@@ -34,8 +34,9 @@ def make_double_lanague_subtitle(
     use_dict: bool = False,
     translate_engner: TranslationEngine = None,
     sleep_time=30,
+    max_package_size=1024,
 ) -> str:
-    '''
+    """
     制作双语字幕
 
     Args:
@@ -51,10 +52,11 @@ def make_double_lanague_subtitle(
         use_dict (bool, optional): 是否是词典翻译 Defaults to False.
         translate_engner (_type_, optional): 翻译引擎 Defaults to Baidufree.
         sleep_time (int, optional): 每用一次引擎，休眠时间，防止引擎拒绝 Defaults to 30.
+        max_package_size (int, optional): 翻译包的大小，是把每个小句子组合为大的数据包后大小， Defaults to 1024.
 
     Returns:
         str: _description_
-    '''
+    """
 
     assert isinstance(translate_engner, TranslationEngine)
 
@@ -67,8 +69,7 @@ def make_double_lanague_subtitle(
     sub.make_sentence()
     textlist = sub.get_sentences_text()
 
-    # TODO 增加短句子凑成翻译包大小的选择，为了AI翻译，需要将翻译包大小设置为2000
-    textpack = Translator.make_fanyi_packge(textlist)
+    textpack = Translator.make_fanyi_packge(textlist, string_max=max_package_size)
 
     fdict = dict()
     if use_dict:

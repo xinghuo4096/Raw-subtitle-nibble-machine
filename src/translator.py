@@ -144,11 +144,12 @@ class Translator:
 
     @staticmethod
     def make_fanyi_packge(
-        full_sentences: list, string_max=4988, engine: TranslationEngine = BaiduceEngine
+        full_sentences: list, string_max=1024, engine: TranslationEngine = BaiduceEngine
     ):
-        '''
+        """
         make_fanyi_packge 短句子打包为翻译引擎一次可以识别的最大量包
-        一行不能超过5000字符，超过报错。
+        比如有些翻译引擎一行不能超过5000字符，超过报错。
+        ai的翻译引擎根据模型，输出token量不同，有的模型是1000，有的模型是2000，有的模型是4000。
 
         google是少于5000字符
 
@@ -157,7 +158,7 @@ class Translator:
 
         Returns:
             list，打好包的文本
-        '''
+        """
         fanyitexts = []
         length = 0
         full_sentence = []
