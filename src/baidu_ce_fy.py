@@ -1,3 +1,4 @@
+from datetime import time
 from translation_engine import TranslationEngine
 import requests
 import json
@@ -71,6 +72,19 @@ class BaiduceEngine(TranslationEngine):
 
             rjson = response.json()
             self.rjson = rjson
+
+            if (
+                "error_code" in rjson and rjson["error_code"]
+            ):  # 检查是否存在 'error_code' 键且其值不为空
+                print(
+                    f"Error during translation:{rjson['error_code']}, {rjson['error_msg']}"
+                )
+                raise Exception(
+                    f"Error during translation:{rjson['error_code']}, {rjson['error_msg']}"
+                )
+
+            if sleep_time > 0:
+                time.sleep(sleep_time)
             return rjson, None
         except KeyError as e:
             print(f"Error extracting dst and src: {e}")
@@ -92,7 +106,9 @@ class BaiduceEngine(TranslationEngine):
         Returns:
             _type_: _description_
         """
-        strlist = [x["dst"] for x in baidu_json["trans_result"]["data"]]
+        if "result" in baidu_json and baidu_json["result"]:  # 检查是否存在 'result' 键
+
+            strlist = [x["dst"] for x in baidu_json["result"]["trans_result"]]
         return strlist
 
     def make_fanyi_dict(self, baidu_json) -> dict:

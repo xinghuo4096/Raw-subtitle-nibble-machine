@@ -84,7 +84,7 @@ class ZhipuEngine:
                 json.dump({"total_tokens": self.tokens_usage}, file)
             print(f"Token使用统计已保存到 {file_path}")
         except Exception as e:
-            print(f"保存Token使用统计时发生错误: {e}")
+            print(f"保存Token使用统计时发生错误: {file_path},{e}")
 
 
 # 使用示例
@@ -97,8 +97,9 @@ if __name__ == "__main__":
     text = (
         "John, AI is currently generating a lot of warnings,are you sure about this? It sounds like a dumb idea.\nfuck,Trust me, Sarah. This is going to work. We just need to stick to the plan.",
         "But what if AI finds out? It'll help us!",
+        "When tomorrow turns in today, yesterday, and someday that no more important in your memory, we suddenly realize that we r pushed forward by time. This is not a train in still in which you may feel forward when another train goes by. It is the truth that we've all grown up. And we become different.",
     )
-    for i in range(2):
+    for i in range(len(text)):
         translated_text = translator.translate(text[i])
         if translated_text:
             print(f"翻译 {i+1}:\n {translated_text}")
