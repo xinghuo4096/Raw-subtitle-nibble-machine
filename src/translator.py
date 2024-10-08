@@ -8,11 +8,13 @@ Returns:
 '''
 import copy
 import re
+from typing import Dict
 from urllib.parse import quote
 
 from Srt import Srt, detect_code, load_srt_fromfile
-from translation_engine import  TranslationEngine
+
 from baidu_ce_fy import BaiduceEngine
+from translation_engine import TranslationEngine
 
 SENCTENCE_END_MARK = (r'[\w ]+[\[\]*()?.!♪]')
 RE_FIND = re.compile(SENCTENCE_END_MARK)
@@ -144,7 +146,7 @@ class Translator:
 
     @staticmethod
     def make_fanyi_packge(
-        full_sentences: list, string_max=1024, engine: TranslationEngine = BaiduceEngine
+        full_sentences: list,  engine: TranslationEngine, string_max=1024
     ):
         """
         make_fanyi_packge 短句子打包为翻译引擎一次可以识别的最大量包
@@ -167,7 +169,7 @@ class Translator:
 
             if engine is BaiduceEngine:
                 text = item + '\n'
-            else:               
+            else:
                 text = quote(item + '\n', 'utf-8')
 
             if len(text) > string_max:
@@ -539,8 +541,8 @@ class TranslationDict:
     '''
 
     def __init__(self):
-        self.dict = dict()
-        self.glossary = dict()
+        self.dict = Dict[str, str] = {}
+        self.glossary = Dict[str, str] = {}
 
     def dict_load(self, fname):
         '''

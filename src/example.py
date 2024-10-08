@@ -61,13 +61,17 @@
 """
 
 import os
-import sys
 
 from Srt import Srt, merge_ass_tofile
-from clear_subtitle import clear_subtile_fun1, clear_subtile_fun2
-from clear_subtitle import make_subtile_glossary_fun1, make_subtile_glossary_fun2
-from double_language_subtitle import make_double_lanague_subtitle
+
 from baidu_ce_fy import BaiduceEngine
+from clear_subtitle import (
+    clear_subtile_fun1,
+    clear_subtile_fun2,
+    make_subtile_glossary_fun1,
+    make_subtile_glossary_fun2,
+)
+from double_language_subtitle import make_double_lanague_subtitle
 
 
 def main_batch2():
@@ -104,7 +108,8 @@ def main_batch2():
                     f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
                 clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
                 make_subtile_glossary_fun1(
-                    f"{fname}.en.3.srt", f"{fname}.en.4.srt", "../indata/glossary.txt"
+                    f"{fname}.en.3.srt", f"{fname}.en.4.srt",
+                    "../indata/glossary.txt"
                 )
 
                 baiducd_fy = BaiduceEngine("../config/mykeys.json")
@@ -119,14 +124,16 @@ def main_batch2():
                     use_dict=True,
                 )
                 make_subtile_glossary_fun2(
-                    f"{fname}.cn.1.srt", f"{fname}.cn.2.srt", "../indata/glossary.txt"
+                    f"{fname}.cn.1.srt", f"{fname}.cn.2.srt",
+                      "../indata/glossary.txt"
                 )
                 merge_ass_tofile(
                     first_subtitle_fname=f"{fname}.cn.2.srt",
                     second_subtitle_fname=f"{fname}.en.3.srt",
                     new_subtitle_fname=f"{fname}.cnen.ass",
                     unalign_subtitle_fname=f"{fname}.unalgin.txt",
-                    ass_template_fname=("../indata" "/ass_template_cn_en_1920.txt"),
+                    ass_template_fname=os.path.join(
+                        "../indata", "ass_template_cn_en_1920.txt"),
                     ass_head_fname=("../indata" "/ass_head_cn_en_1920.txt"),
                     mark1="",
                     mark2="",

@@ -1,10 +1,10 @@
 import datetime
+from typing import Dict
 
 from Srt import save_srt
 
-from translator import Media, Subtitle, TranslationDict, Translator, save_file
 from translation_engine import TranslationEngine
-from baidu_ce_fy import BaiduceEngine
+from translator import Media, Subtitle, TranslationDict, Translator, save_file
 
 
 def subtitle_message(message: str, **text):
@@ -16,7 +16,8 @@ def subtitle_message(message: str, **text):
     '''
     time1 = datetime.datetime.now() + datetime.timedelta(seconds=int(message))
 
-    text1 = f'total time: {message} sec,endtime:{ time1.strftime("%Y-%m-%d %H:%M:%S")}'
+    text1 = f'total time: {message} sec,endtime:{
+        time1.strftime("%Y-%m-%d %H:%M:%S")}'
     print(text1)
     return
 
@@ -27,12 +28,12 @@ def make_double_lanague_subtitle(
     to_sub: str,
     err_text: str,
     dict_text: str,
+    translate_engner: TranslationEngine,
     from_language: str = "en",
     to_language: str = "zh",
     glossary_file: str = "",
     messagefun=subtitle_message,
     use_dict: bool = False,
-    translate_engner: TranslationEngine = None,
     sleep_time=30,
     max_package_size=1024,
 ) -> str:
@@ -60,7 +61,7 @@ def make_double_lanague_subtitle(
 
     assert isinstance(translate_engner, TranslationEngine)
 
-    tengine = translate_engner
+    t_engine = translate_engner
     movie1 = Media(media)
     movie1.add_subtitle(from_language, from_sub)
 
@@ -69,9 +70,11 @@ def make_double_lanague_subtitle(
     sub.make_sentence()
     textlist = sub.get_sentences_text()
 
-    textpack = Translator.make_fanyi_packge(textlist, string_max=max_package_size)
+    textpack = Translator.make_fanyi_packge(full_sentences=textlist,
+                                            engine=translate_engner,
+                                            string_max=max_package_size)
 
-    fdict = dict()
+    fdict: Dict[str, str] = {}
     if use_dict:
         dict1 = TranslationDict()
         dict1.dict_load(dict_text)
@@ -82,11 +85,13 @@ def make_double_lanague_subtitle(
         for item in textpack:
             messagefun(f'{(len(textpack)-timecount)*sleep_time}')
             timecount += 1
-            fanyiret = tengine.translate(item, from_language, to_language,
-                                         sleep_time)
+            fanyiret = t_engine.translate(
+                item, from_language, to_language,
+                sleep_time
+            )
             fanyi_text, _ = fanyiret
-            dict1 = tengine.make_fanyi_dict(fanyi_text)
-            fdict.update(dict1)
+            temp_dict = t_engine.make_fanyi_dict(fanyi_text)
+            fdict.update(temp_dict)
 
     subcn = movie1.add_language_subtitle("zh-CN")
     assert subcn == movie1.subtitles[1]
@@ -101,3 +106,4 @@ def make_double_lanague_subtitle(
     strlist = ['{0}\n{1}'.format(x, fdict[x]) for x in list(fdict)]
 
     save_file(dict_text, '\n'.join(strlist))
+    return to_sub

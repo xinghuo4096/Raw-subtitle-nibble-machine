@@ -1,8 +1,10 @@
-from datetime import time
-from translation_engine import TranslationEngine
-import requests
 import json
-import os
+from datetime import time
+from typing import Dict
+
+import requests
+
+from translation_engine import TranslationEngine
 
 
 class BaiduceEngine(TranslationEngine):
@@ -63,9 +65,12 @@ class BaiduceEngine(TranslationEngine):
             return None
 
     def translate(self, text, from_language, to_language, sleep_time):
-        url = f"https://aip.baidubce.com/rpc/2.0/mt/texttrans/v1?access_token={self.get_access_token()}"
-        payload = json.dumps({"from": from_language, "to": to_language, "q": text})
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        url = f"https://aip.baidubce.com/rpc/2.0/mt/texttrans/v1?access_token=\
+        {self.get_access_token()}"
+        payload = json.dumps({"from": from_language,
+                              "to": to_language, "q": text})
+        headers = {"Content-Type": "application/json",
+                   "Accept": "application/json"}
         try:
             response = requests.post(url, headers=headers, data=payload)
             response.raise_for_status()  # Raises HTTPError for bad responses
@@ -77,10 +82,12 @@ class BaiduceEngine(TranslationEngine):
                 "error_code" in rjson and rjson["error_code"]
             ):  # 检查是否存在 'error_code' 键且其值不为空
                 print(
-                    f"Error during translation:{rjson['error_code']}, {rjson['error_msg']}"
+                    f"Error during translation:{rjson['error_code']},\
+                    {rjson['error_msg']}"
                 )
                 raise Exception(
-                    f"Error during translation:{rjson['error_code']}, {rjson['error_msg']}"
+                    f"Error during translation:{rjson['error_code']},\
+                    {rjson['error_msg']}"
                 )
 
             if sleep_time > 0:
@@ -106,12 +113,13 @@ class BaiduceEngine(TranslationEngine):
         Returns:
             _type_: _description_
         """
-        if "result" in baidu_json and baidu_json["result"]:  # 检查是否存在 'result' 键
+        # 检查是否存在 'result' 键
+        if "result" in baidu_json and baidu_json["result"]:
 
             strlist = [x["dst"] for x in baidu_json["result"]["trans_result"]]
         return strlist
 
-    def make_fanyi_dict(self, baidu_json) -> dict:
+    def make_fanyi_dict(self, baidu_json) -> Dict[str, str]:
         """
         翻译词典
 
@@ -122,7 +130,8 @@ class BaiduceEngine(TranslationEngine):
             dict: _description_
         """
 
-        strlist = {x["src"]: x["dst"] for x in baidu_json["result"]["trans_result"]}
+        strlist = {x["src"]: x["dst"] 
+                   for x in baidu_json["result"]["trans_result"]}
 
         return strlist
 
