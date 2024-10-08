@@ -1,5 +1,5 @@
+import time as tm
 import json
-from datetime import time
 from typing import Dict
 
 import requests
@@ -91,7 +91,7 @@ class BaiduceEngine(TranslationEngine):
                 )
 
             if sleep_time > 0:
-                time.sleep(sleep_time)
+                tm.sleep(sleep_time)
             return rjson, None
         except KeyError as e:
             print(f"Error extracting dst and src: {e}")
@@ -130,7 +130,7 @@ class BaiduceEngine(TranslationEngine):
             dict: _description_
         """
 
-        strlist = {x["src"]: x["dst"] 
+        strlist = {x["src"]: x["dst"]
                    for x in baidu_json["result"]["trans_result"]}
 
         return strlist

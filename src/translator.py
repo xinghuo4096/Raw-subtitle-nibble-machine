@@ -167,10 +167,7 @@ class Translator:
         size_limite = string_max
         for item in full_sentences:
 
-            if engine is BaiduceEngine:
-                text = item + '\n'
-            else:
-                text = quote(item + '\n', 'utf-8')
+            text = item + '\n'
 
             if len(text) > string_max:
                 raise Exception('error:to long.' + item.text)
