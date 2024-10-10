@@ -1,17 +1,27 @@
 import datetime
 import importlib
 import json
+import logging
+import logging.config
 import os
+import re
 import sys
 from typing import Dict
 
+from json_repair import repair_json
 from zhipuai import ZhipuAI  # type: ignore
 
+from jzhipu_ai_json import try_parse_json_object
+from rsnm_log import setup_logging
 from translation_engine import TranslationEngine
+
+logger = setup_logging()
+
+PATTERN = re.compile(r"```(?:json\s+)?(\W.*?)```", re.DOTALL)
 
 
 class ZhipuEngine(TranslationEngine):
-    def __init__(self, api_key, config: str = "my_zhipu_fy",lib_path='config'):
+    def __init__(self, api_key, config: str = "my_zhipu_fy", lib_path="config"):
         self.api_key = self.load_api_key(api_key)
         self.client = ZhipuAI(api_key=self.api_key)
         self.token_usage = 0
@@ -19,7 +29,7 @@ class ZhipuEngine(TranslationEngine):
             "token_usage.json"  # 初始化save_token_usage的文件名
         )
 
-        self.config = self.load_config(config,lib_path)
+        self.config = self.load_config(config, lib_path)
 
         # 访问配置信息
         model = self.config["model"]
@@ -29,11 +39,11 @@ class ZhipuEngine(TranslationEngine):
         max_tokens = self.config["max_tokens"]
 
         # 打印配置信息
-        print(f"Model: {model}")
-        print(f"System Content (truncated): {system_content}")
-        print(f"Top P: {top_p}")
-        print(f"Temperature: {temperature}")
-        print(f"Max Tokens: {max_tokens}")
+        logger.info(f"Model: {model}")
+        logger.info(f"System Content (truncated): {system_content}")
+        logger.info(f"Top P: {top_p}")
+        logger.info(f"Temperature: {temperature}")
+        logger.info(f"Max Tokens: {max_tokens}")
 
         self.tokens_usage = {
             "prompt_tokens": 0,
@@ -47,38 +57,40 @@ class ZhipuEngine(TranslationEngine):
                 data = json.load(file)
                 return data["api_key"]
         except FileNotFoundError:
-            print("API密钥文件未找到，请确保存在api_key.json文件。")
+            logger.info("API密钥文件未找到，请确保存在api_key.json文件。")
             raise Exception("API密钥文件未找到，请确保存在api_key.json文件。")
         except json.JSONDecodeError:
-            print("API密钥文件格式错误，请确保api_key.json文件是一个有效的JSON文件。")
+            logger.info(
+                "API密钥文件格式错误，请确保api_key.json文件是一个有效的JSON文件。"
+            )
             raise Exception(
                 "API密钥文件格式错误，请确保api_key.json文件是一个有效的JSON文件。"
             )
 
-    def load_config(self, zhipu_config,lib_path='config'):
+    def load_config(self, zhipu_config, lib_path="config"):
         try:
             # 动态加载 config 模块
             # 显示当前工作目录
             current_directory = os.getcwd()
-            print(f"当前工作目录: {current_directory}")
+            logger.info(f"当前工作目录: {current_directory}")
 
             # 检查当前目录的config文件夹是否存在
-            config_path = os.path.join(current_directory,lib_path )
+            config_path = os.path.join(current_directory, lib_path)
             if os.path.exists(config_path):
                 # 将config目录添加到模块搜索路径
                 sys.path.append(config_path)
-                print(f"'config'目录已添加到模块搜索路径：{config_path}")
+                logger.info(f"'config'目录已添加到模块搜索路径：{config_path}")
             else:
-                print(f"'config'目录不存在：{config_path}")
+                logger.info(f"'config'目录不存在：{config_path}")
 
             config = importlib.import_module(zhipu_config)
 
             return config.config
         except ImportError as e:
-            print(f"无法导入配置文件：{e}")
+            logger.info(f"无法导入配置文件：{e}")
             raise Exception(f"无法导入配置文件：{e}")
         except Exception as e:
-            print(f"加载配置文件时发生错误：{e}")
+            logger.info(f"加载配置文件时发生错误：{e}")
             raise Exception(f"加载配置文件时发生错误：{e}")
 
     def translate(self, user_input, from_language, to_language, sleep_time):
@@ -101,13 +113,31 @@ class ZhipuEngine(TranslationEngine):
                 stream=False,
             )
             result = ""
-            result = response.choices[0].message.content
-            self.tokens_usage["prompt_tokens"] += response.usage.prompt_tokens
-            self.tokens_usage["completion_tokens"] += response.usage.completion_tokens
-            self.tokens_usage["total_tokens"] += response.usage.total_tokens
-            return result, self.tokens_usage["total_tokens"]
+
+            logger.info("\033[1;32m" + f"client: {response}" + "\033[0m")
+
+            action_match = PATTERN.search(response.choices[0].message.content)
+            if action_match is not None:
+                json_text, json_object = try_parse_json_object(
+                    action_match.group(1).strip()
+                )
+
+                result = json.dumps(json_object)
+
+                self.tokens_usage["prompt_tokens"] += response.usage.prompt_tokens
+                self.tokens_usage["completion_tokens"] += (
+                    response.usage.completion_tokens
+                )
+                self.tokens_usage["total_tokens"] += response.usage.total_tokens
+
+                return result, self.tokens_usage["total_tokens"]
+            else:
+                logger.info("Error: response.choices[0].message.content")
+                return None
         except Exception as e:
-            print(f"发生错误: {e}")
+            logger.info(f"发生错误: {e}")
+            logger.info(f"{user_input} 翻译失败,请修改，修改内容要和原文字数一样。")
+
             return None
 
     def make_fanyi_dict(self, zhipu_result) -> Dict[str, str]:
@@ -118,22 +148,52 @@ class ZhipuEngine(TranslationEngine):
 
         :return: dict[str,str],原文，译文
         """
-        lines = zhipu_result.split("\n")
-        lines = [line for line in lines if line.strip()]
-        print(lines[0])
-        print(lines[1])
-        print("---")
-
         line_dict: Dict[str, str] = {}
-        # 如果len(lines)为奇数，则删除一行，并打印一个错误提示
-        if len(lines) % 2 != 0:
-            print(f"{len(lines)},Error: The number of lines is not even.")
-            lines.pop()
 
-        # 遍历列表，步长为2，从索引2开始
-        for i in range(2, len(lines), 2):
-            # 将每对连续的行添加到字典中，其中第一行作为键，第二行作为值
-            line_dict[lines[i]] = lines[i + 1]
+        try:
+            # 将字符串解析为JSON对象
+
+            data = json.loads(zhipu_result)
+
+            # 提取剧情总结
+            summary = data.get("剧情总结", "")
+
+            # 提取翻译风格
+            style = data.get("翻译风格", {})
+
+            # 提取翻译结果
+            translations = data.get("翻译结果", [])
+
+            # 提取翻译结果
+            translations = data.get("翻译结果", [])
+
+            logger.info(summary)
+            logger.info(style)
+
+            # 创建一个空字典来存储原文和译文的对应关系
+            original_to_translation_dict = {}
+
+            # 遍历翻译结果列表，将原文和译文添加到字典中
+            for item in translations:
+                original_text = item.get("原文", "")
+                translation_text = item.get("译文", "")
+                if len(translation_text) > 5 and not re.search(
+                    r"[\u4e00-\u9fa5]", translation_text
+                ):
+                    logger.info(f"The line {translation_text} \
+                            does not contain Chinese characters.")
+                else:
+                    original_to_translation_dict[original_text] = translation_text
+
+            for (
+                original_text,
+                translation_text,
+            ) in original_to_translation_dict.items():
+                line_dict[original_text] = translation_text
+
+            # 打印结果
+        except json.JSONDecodeError as e:
+            logger.info(f"JSON解析错误: {e}")
 
         return line_dict
 
@@ -143,9 +203,9 @@ class ZhipuEngine(TranslationEngine):
         try:
             with open(file_path, "w") as file:
                 json.dump({"total_tokens": self.tokens_usage}, file)
-            print(f"Token使用统计已保存到 {file_path}")
+            logger.info(f"Token使用统计已保存到 {file_path}")
         except Exception as e:
-            print(f"保存Token使用统计时发生错误: {file_path},{e}")
+            logger.info(f"保存Token使用统计时发生错误: {file_path},{e}")
 
     def zhipuai_subtitle_message(
         self,
@@ -169,10 +229,11 @@ class ZhipuEngine(TranslationEngine):
 
         time1 = datetime.datetime.now() + datetime.timedelta(seconds=finally_time)
 
-        text1 = f'total time: {total_time} sec, finally time: {finally_time} sec,endtime:{
+        text1 = f'{timecount} total time: {total_time} sec, finally time: {finally_time} sec,endtime:{
             time1.strftime("%Y-%m-%d %H:%M:%S")}'
         print(text1)
         return
+
 
 if __name__ == "__main__":
     pass

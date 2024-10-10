@@ -1,24 +1,30 @@
 import datetime
+import os
 from typing import Dict
 
 from Srt import save_srt
 
+from rsnm_log import setup_logging
 from translation_engine import TranslationEngine
 from translator import Media, Subtitle, TranslationDict, Translator, save_file
 
+logger = setup_logging()
 
-def subtitle_message(message: str, textpack:int=0,timecount:int=0,sleep_time:int=0,**text):
-    '''
+
+def subtitle_message(
+    message: str, textpack: int = 0, timecount: int = 0, sleep_time: int = 0, **text
+):
+    """
     消息回调
 
     Args:
         message (str): _description_
-    '''
+    """
     time1 = datetime.datetime.now() + datetime.timedelta(seconds=int(message))
 
     text1 = f'total time: {message} sec,endtime:{
         time1.strftime("%Y-%m-%d %H:%M:%S")}'
-    print(text1)
+    logger.info(text1)
     return
 
 
@@ -70,9 +76,9 @@ def make_double_lanague_subtitle(
     sub.make_sentence()
     textlist = sub.get_sentences_text()
 
-    textpack = Translator.make_fanyi_packge(full_sentences=textlist,
-                                            engine=translate_engner,
-                                            string_max=max_package_size)
+    textpack = Translator.make_fanyi_packge(
+        full_sentences=textlist, engine=translate_engner, string_max=max_package_size
+    )
 
     fdict: Dict[str, str] = {}
     if use_dict:
@@ -83,15 +89,31 @@ def make_double_lanague_subtitle(
         # 这里是一组包，需要一个一个的翻译。
         timecount = 0
         for item in textpack:
-            messagefun(f'{len(textpack)-timecount}',len(textpack),timecount,sleep_time)
+            savefilename = f"{media}.{len(textpack)}.{timecount}.txt"
+            # 如果存在savefilename文件，则加载
+            if os.path.exists(savefilename):
+                # 打开savefilename文件读取内容
+                with open(savefilename, "r", encoding="utf-8") as f:
+                    fanyi_text = f.read()
+            else:
+                messagefun(
+                    f"{len(textpack)-timecount}", len(textpack), timecount, sleep_time
+                )
+                fanyiret = t_engine.translate(
+                    item, from_language, to_language, sleep_time
+                )
+                if fanyiret is None:
+                    fanyi_text = ""
+                    logger.info("翻译失败")
+                    logger.info(f"{savefilename} 翻译失败,请修改，修改内容要和原文字数一样。")
+                else:
+                    fanyi_text, _ = fanyiret
+                    # 保存文件savefilename
+                    save_file(savefilename, fanyi_text)
+                    temp_dict = t_engine.make_fanyi_dict(fanyi_text)
+                    fdict.update(temp_dict)
+
             timecount += 1
-            fanyiret = t_engine.translate(
-                item, from_language, to_language,
-                sleep_time
-            )
-            fanyi_text, _ = fanyiret
-            temp_dict = t_engine.make_fanyi_dict(fanyi_text)
-            fdict.update(temp_dict)
 
     subcn = movie1.add_language_subtitle("zh-CN")
     assert subcn == movie1.subtitles[1]
@@ -99,11 +121,11 @@ def make_double_lanague_subtitle(
 
     err_texts = Translator.translate_byte_dict(subcn, fdict)
     if len(err_texts) > 0:
-        save_file(err_text, '\n'.join(err_texts))
+        save_file(err_text, "\n".join(err_texts))
 
     save_srt(to_sub, subcn.subblocks)
     # pylint:disable=consider-using-f-string
-    strlist = ['{0}\n{1}'.format(x, fdict[x]) for x in list(fdict)]
+    strlist = ["{0}\n{1}".format(x, fdict[x]) for x in list(fdict)]
 
-    save_file(dict_text, '\n'.join(strlist))
+    save_file(dict_text, "\n".join(strlist))
     return to_sub
