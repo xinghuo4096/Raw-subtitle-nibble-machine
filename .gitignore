@@ -134,3 +134,4 @@ config/mykeys.json
 config/my_zhipu_api_key.json
 config/my_zhipu_fy.config.json
 token_usage.json
+config/my_zhipu_fy.py

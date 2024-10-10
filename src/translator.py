@@ -538,8 +538,8 @@ class TranslationDict:
     '''
 
     def __init__(self):
-        self.dict = Dict[str, str] = {}
-        self.glossary = Dict[str, str] = {}
+        self.dict : Dict[str, str] = {}
+        self.glossary : Dict[str, str] = {}
 
     def dict_load(self, fname):
         '''

@@ -121,7 +121,7 @@ def main_batch2():
                     err_text=f"{fname}.err.txt",
                     dict_text=f"{fname}.dict.txt",
                     translate_engner=baiducd_fy,
-                    use_dict=True,
+                    use_dict=False,
                 )
                 make_subtile_glossary_fun2(
                     f"{fname}.cn.1.srt", f"{fname}.cn.2.srt",

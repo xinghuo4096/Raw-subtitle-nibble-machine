@@ -7,7 +7,7 @@ from translation_engine import TranslationEngine
 from translator import Media, Subtitle, TranslationDict, Translator, save_file
 
 
-def subtitle_message(message: str, **text):
+def subtitle_message(message: str, textpack:int=0,timecount:int=0,sleep_time:int=0,**text):
     '''
     消息回调
 
@@ -83,7 +83,7 @@ def make_double_lanague_subtitle(
         # 这里是一组包，需要一个一个的翻译。
         timecount = 0
         for item in textpack:
-            messagefun(f'{(len(textpack)-timecount)*sleep_time}')
+            messagefun(f'{len(textpack)-timecount}',len(textpack),timecount,sleep_time)
             timecount += 1
             fanyiret = t_engine.translate(
                 item, from_language, to_language,

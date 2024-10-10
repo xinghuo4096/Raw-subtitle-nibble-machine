@@ -2,7 +2,6 @@
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "python.linting.pylintEnabled": true,
 
   "python.analysis.extraPaths": ["./SrtMergeBox/src"],
 
@@ -18,17 +17,13 @@
   "[python]": {
     "editor.formatOnSave": true,
     "editor.wordWrapColumn": 79,
-    "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
-    }
+    },
+    "diffEditor.codeLens": true
   },
-  "isort.args":["--profile", "black"],
   "files.autoSave": "afterDelay",
   "editor.fontSize": 16,
   "python.createEnvironment.contentButton": "show",
   "python.missingPackage.severity": "Information",
-  "black-formatter.args": [
-    "[\"--line-length\", \"79\"]"
-  ]
 }
