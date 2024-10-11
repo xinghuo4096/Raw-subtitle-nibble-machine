@@ -36,6 +36,15 @@ default_logging_conf = {
         }
     },
 }
+# 定义不同日志级别的颜色
+LOG_COLORS = {
+    'debug': '\033[1;34m',  # 蓝色
+    'info': '\033[1;32m',    # 绿色
+    'warning': '\033[1;33m', # 黄色
+    'error': '\033[1;31m',   # 红色
+    'critical': '\033[1;35m' ,# 品红色
+    'reset_color':'\033[0m' # 重置颜色
+}
 
 def setup_logging(logging_conf=default_logging_conf):
     """

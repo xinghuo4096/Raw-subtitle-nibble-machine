@@ -11,9 +11,8 @@ def time_to_pause():
     # 总工作时间初始化为0
     total_time = 0
 
-    for i in range(2):
+    for i in range(20):
         try:
-            print(f"提醒开始: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
             # 定义休息提醒的消息列表
             messages = [
                 "休息一下吧，你的眼睛需要放松！",
@@ -30,10 +29,14 @@ def time_to_pause():
             session_time = total_seconds
 
             # 设置定时器
-            time_to_wait = time.time() + total_seconds
-            
-            print(f"休息时间: {total_seconds // 60} 分钟")
-            time.sleep(total_seconds)
+            time_to_wait = time.time() + session_time
+
+            print(
+                f"提醒开始: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n"
+                f"工作 {total_seconds // 60} 分钟后休息。大约是："
+                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_to_wait))}"
+            )
+            time.sleep(session_time)
 
             total_time += session_time  # 累加到总工作时间
 

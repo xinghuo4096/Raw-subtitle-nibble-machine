@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 from typing import Dict
 
@@ -90,29 +91,39 @@ def make_double_lanague_subtitle(
         timecount = 0
         for item in textpack:
             savefilename = f"{media}.{len(textpack)}.{timecount}.txt"
+            
+
+            json_string = t_engine.make_output_json(item)
+            fanyi_text = ""
+
             # 如果存在savefilename文件，则加载
             if os.path.exists(savefilename):
                 # 打开savefilename文件读取内容
-                with open(savefilename, "r", encoding="utf-8") as f:
-                    fanyi_text = f.read()
+                with open(savefilename, "r", encoding="utf-8") as fp:
+                    fanyi_text = fp.read()
             else:
                 messagefun(
                     f"{len(textpack)-timecount}", len(textpack), timecount, sleep_time
                 )
+
+                json_string = t_engine.make_output_json(item)
                 fanyiret = t_engine.translate(
-                    item, from_language, to_language, sleep_time
+                    json_string, from_language, to_language, sleep_time
                 )
                 if fanyiret is None:
                     fanyi_text = ""
                     logger.info("翻译失败")
-                    logger.info(f"{savefilename} 翻译失败,请修改，修改内容要和原文字数一样。")
+                    logger.info(
+                        f"{savefilename} 翻译失败,请修改，修改内容要和原文字数一样。"
+                    )
                 else:
                     fanyi_text, _ = fanyiret
                     # 保存文件savefilename
                     save_file(savefilename, fanyi_text)
-                    temp_dict = t_engine.make_fanyi_dict(fanyi_text)
-                    fdict.update(temp_dict)
 
+            if fanyi_text:
+                temp_dict = t_engine.make_fanyi_dict(fanyi_text, json_string)
+                fdict.update(temp_dict)
             timecount += 1
 
     subcn = movie1.add_language_subtitle("zh-CN")

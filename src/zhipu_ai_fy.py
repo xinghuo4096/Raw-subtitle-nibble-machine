@@ -12,7 +12,7 @@ from json_repair import repair_json
 from zhipuai import ZhipuAI  # type: ignore
 
 from jzhipu_ai_json import try_parse_json_object
-from rsnm_log import setup_logging
+from rsnm_log import LOG_COLORS, setup_logging
 from translation_engine import TranslationEngine
 
 logger = setup_logging()
@@ -30,20 +30,6 @@ class ZhipuEngine(TranslationEngine):
         )
 
         self.config = self.load_config(config, lib_path)
-
-        # 访问配置信息
-        model = self.config["model"]
-        system_content = self.config["system_content"]
-        top_p = self.config["top_p"]
-        temperature = self.config["temperature"]
-        max_tokens = self.config["max_tokens"]
-
-        # 打印配置信息
-        logger.info(f"Model: {model}")
-        logger.info(f"System Content (truncated): {system_content}")
-        logger.info(f"Top P: {top_p}")
-        logger.info(f"Temperature: {temperature}")
-        logger.info(f"Max Tokens: {max_tokens}")
 
         self.tokens_usage = {
             "prompt_tokens": 0,
@@ -100,10 +86,7 @@ class ZhipuEngine(TranslationEngine):
                 messages=[
                     {
                         "role": "system",
-                        "content": self.config.get(
-                            "system_content",
-                            "你是电视剧对话翻译家，你会结合上下文并结合剧情完成翻译。",
-                        ),
+                        "content": self.config.get("system_content"),
                     },
                     {"role": "user", "content": "要翻译的内容如下：\n" + user_input},
                 ],
@@ -113,16 +96,20 @@ class ZhipuEngine(TranslationEngine):
                 stream=False,
             )
             result = ""
-
-            logger.info("\033[1;32m" + f"client: {response}" + "\033[0m")
+            logger.info(LOG_COLORS.get('info') + f"client: {response}" + LOG_COLORS.get('reset_color'))
 
             action_match = PATTERN.search(response.choices[0].message.content)
+            
+
+            return 
+
+            
             if action_match is not None:
                 json_text, json_object = try_parse_json_object(
                     action_match.group(1).strip()
                 )
 
-                result = json.dumps(json_object)
+                result = json.dumps(json_object, indent=4, ensure_ascii=False)
 
                 self.tokens_usage["prompt_tokens"] += response.usage.prompt_tokens
                 self.tokens_usage["completion_tokens"] += (
@@ -132,7 +119,11 @@ class ZhipuEngine(TranslationEngine):
 
                 return result, self.tokens_usage["total_tokens"]
             else:
-                logger.info("Error: response.choices[0].message.content")
+                logger.warning(
+                    f"{ LOG_COLORS.get('warning', '\033[0m')}"
+                    f"Error: response.choices[0].message.content"
+                    f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                )
                 return None
         except Exception as e:
             logger.info(f"发生错误: {e}")
@@ -140,7 +131,22 @@ class ZhipuEngine(TranslationEngine):
 
             return None
 
-    def make_fanyi_dict(self, zhipu_result) -> Dict[str, str]:
+    def make_output_json(self, inputText):
+        # 将字符串按行拆分，并去除空行
+        lines = [line.strip() for line in inputText.split("\n") if line.strip()]
+
+        # 组装成包含 'id', '原文', '译文' 的JSON格式
+        json_data = json.loads(self.config["output_json"])
+
+        t_result = json_data["翻译结果"]
+        for index, line in enumerate(lines, start=1):
+            t_result.append({"id": index, "原文": line, "译文": ""})
+
+        # 将字典转换为JSON字符串
+        json_string = json.dumps(json_data)
+        return json_string
+
+    def make_fanyi_dict(self, zhipu_result, source) -> Dict[str, str]:
         """
         翻译词典
 
@@ -150,6 +156,22 @@ class ZhipuEngine(TranslationEngine):
         """
         line_dict: Dict[str, str] = {}
 
+        # 执行比较
+        diff = self.compare_original_text(source, zhipu_result)
+
+        # 输出不同点
+        if diff:
+            logger.warning(
+                f"{LOG_COLORS.get("warning")}"
+                f"原文和翻译结果不一致:{diff}"
+                f"{ LOG_COLORS.get('reset_color')}"
+            )
+        else:
+            logger.info(
+                f"{LOG_COLORS.get('info')}"
+                f"No differences found in '原文'."
+                f"{ LOG_COLORS.get('reset_color')}"
+            )
         try:
             # 将字符串解析为JSON对象
 
@@ -164,12 +186,6 @@ class ZhipuEngine(TranslationEngine):
             # 提取翻译结果
             translations = data.get("翻译结果", [])
 
-            # 提取翻译结果
-            translations = data.get("翻译结果", [])
-
-            logger.info(summary)
-            logger.info(style)
-
             # 创建一个空字典来存储原文和译文的对应关系
             original_to_translation_dict = {}
 
@@ -180,8 +196,12 @@ class ZhipuEngine(TranslationEngine):
                 if len(translation_text) > 5 and not re.search(
                     r"[\u4e00-\u9fa5]", translation_text
                 ):
-                    logger.info(f"The line {translation_text} \
-                            does not contain Chinese characters.")
+                    logger.warning(
+                        f"{ LOG_COLORS.get('warning')}"
+                        f"The line {translation_text}"
+                        f"does not contain Chinese characters."
+                        f"{ LOG_COLORS.get('reset_color')}"
+                    )
                 else:
                     original_to_translation_dict[original_text] = translation_text
 
@@ -233,6 +253,72 @@ class ZhipuEngine(TranslationEngine):
             time1.strftime("%Y-%m-%d %H:%M:%S")}'
         print(text1)
         return
+
+    def clean_text(text):
+        # 去除多余空格
+        text = re.sub(r"\s+", "", text)
+        # 去除特殊字符
+        text = re.sub(r"[^\w\s]", "", text)
+        # 转换为小写
+        text = text.lower()
+        return text
+
+    def normalize_punctuation(text):
+        # 标准化标点符号（这里简单地移除了它们）
+        text = re.sub(r"[.,!?;:]", "", text)
+        return text
+
+    # 比较翻译前和翻译后的原文是否一致
+    def compare_original_text(self, original_text, translation_text):
+        differences = []
+
+        dict1 = json.loads(original_text)
+        dict2 = json.loads(translation_text)
+
+        # 获取两个JSON对象中的“翻译结果”数组
+        results1 = dict1.get("翻译结果", [])
+        results2 = dict2.get("翻译结果", [])
+
+        results1 = [
+            ZhipuEngine.normalize_punctuation(ZhipuEngine.clean_text(x.get("原文")))
+            for x in results1
+        ]
+        results2 = [
+            ZhipuEngine.normalize_punctuation(ZhipuEngine.clean_text(x.get("原文")))
+            for x in results2
+        ]
+
+        if len(results1) != len(results2):
+            logger.warning(
+                f"{LOG_COLORS.get('warning')}"
+                f"两个JSON对象中的“翻译结果”数组长度不一致"
+                f"{len(results1)}-{len(results2)}"
+                f"{LOG_COLORS.get('reset_color')}"
+            )
+
+        # 确保两个数组长度相同
+        max_len = max(len(results1), len(results2))
+        for i in range(max_len):
+            result1 = results1[i] if i < len(results1) else None
+            result2 = results2[i] if i < len(results2) else None
+
+            if result1 and result2:
+                if result1 != result2:
+                    differences.append(
+                        f"Difference at index {i+1}: {result1} != {result2}"
+                    )
+            elif result1:
+                differences.append(
+                    f"Item {i+1} is missing in second dictionary: {result1}"
+                )
+            elif result2:
+                differences.append(
+                    f"Item {i+1} is missing in first dictionary: {result2}"
+                )
+
+        return differences
+
+        #
 
 
 if __name__ == "__main__":
