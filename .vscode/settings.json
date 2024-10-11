@@ -26,4 +26,6 @@
   "editor.fontSize": 16,
   "python.createEnvironment.contentButton": "show",
   "python.missingPackage.severity": "Information",
+  "workbench.localHistory.maxFileSize": 1024000,
+  "workbench.localHistory.maxFileEntries": 102400,
 }

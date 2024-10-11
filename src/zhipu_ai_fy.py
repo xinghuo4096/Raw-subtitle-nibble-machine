@@ -14,6 +14,7 @@ from zhipuai import ZhipuAI  # type: ignore
 from jzhipu_ai_json import try_parse_json_object
 from rsnm_log import LOG_COLORS, setup_logging
 from translation_engine import TranslationEngine
+from translator import Media, Subtitle
 
 logger = setup_logging()
 
@@ -80,30 +81,145 @@ class ZhipuEngine(TranslationEngine):
             raise Exception(f"加载配置文件时发生错误：{e}")
 
     def translate(self, user_input, from_language, to_language, sleep_time):
+        movie1 = Media("Sloborn.S01E01")
+        movie1.add_subtitle(
+            "en", "c:/test/d/Sloborn.S01E01.1080p.BluRay.x264-JustWatch.en.srt"
+        )
+
+        sub = movie1.subtitles[0]
+        assert isinstance(sub, Subtitle)
+        sub.make_sentence()
+        textlist = sub.get_sentences_text()
+        split_text = self.split_list_into_chunks(textlist, 1024)
+
+        pack_text = "\n".join(split_text[0])
+
+        messages = []
+
         try:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": self.config.get("system_content"),
+                }
+            )
+
+            user1 = self.config.get("user_content_1")
+            user1 = user1.replace("srt剧情", pack_text)
+            messages.append(
+                {
+                    "role": "user",
+                    "content": user1,
+                }
+            )
+
             response = self.client.chat.completions.create(
                 model=self.config.get("model", "glm-4-plus"),
-                messages=[
-                    {
-                        "role": "system",
-                        "content": self.config.get("system_content"),
-                    },
-                    {"role": "user", "content": "要翻译的内容如下：\n" + user_input},
-                ],
+                messages=messages,
                 top_p=self.config.get("top_p", 0.7),
                 temperature=self.config.get("temperature", 0.95),
                 max_tokens=self.config.get("max_tokens", 4095),
                 stream=False,
             )
             result = ""
-            logger.info(LOG_COLORS.get('info') + f"client: {response}" + LOG_COLORS.get('reset_color'))
+            logger.info(
+                LOG_COLORS.get("info")
+                + f"client: {response}"
+                + LOG_COLORS.get("reset_color")
+            )
 
             action_match = PATTERN.search(response.choices[0].message.content)
-            
+            if action_match is not None:
+                json_text, json_object = try_parse_json_object(
+                    action_match.group(1).strip()
+                )
+                # 定义 变量：剧情总结
+                summary_text = json_object["总结"]
 
-            return 
+                messages.append({"role": "assistant", "content": summary_text})
 
-            
+                user2 = self.config.get("user_content_2")
+
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": user2,
+                    }
+                )
+
+                response = self.client.chat.completions.create(
+                    model=self.config.get("model", "glm-4-plus"),
+                    messages=messages,
+                    top_p=self.config.get("top_p", 0.7),
+                    temperature=self.config.get("temperature", 0.95),
+                    max_tokens=self.config.get("max_tokens", 4095),
+                    stream=False,
+                )
+                result = ""
+                logger.info(
+                    LOG_COLORS.get("info")
+                    + f"client: {response}"
+                    + LOG_COLORS.get("reset_color")
+                )
+
+                action_match = PATTERN.search(response.choices[0].message.content)
+                if action_match is not None:
+                    json_text, json_object = try_parse_json_object(
+                        action_match.group(1).strip()
+                    )
+                    # 定义 变量：翻译风格
+                    style_text =json.dumps(json_object["翻译风格"], ensure_ascii=False, indent=0)
+
+
+                    messages.append({"role": "assistant", "content": style_text})
+
+                    user3 = self.config.get("user_content_3")
+                    user3 = user3.replace("[翻译风格]", style_text)
+                    user3 = user3.replace("[待翻译剧本]", pack_text)
+
+                    
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": user3,
+                        }
+                    )
+
+                    response = self.client.chat.completions.create(
+                        model=self.config.get("model", "glm-4-plus"),
+                        messages=messages,
+                        top_p=self.config.get("top_p", 0.7),
+                        temperature=self.config.get("temperature", 0.95),
+                        max_tokens=self.config.get("max_tokens", 4095),
+                        stream=False,
+                    )
+                    result = ""
+                    logger.info(
+                        LOG_COLORS.get("info")
+                        + f"client: {response}"
+                        + LOG_COLORS.get("reset_color")
+                    )
+
+                    action_match = PATTERN.search(response.choices[0].message.content)
+                    if action_match is not None:
+                        json_text, json_object = try_parse_json_object(
+                            action_match.group(1).strip()
+                        )
+                        logger.info(f"{ LOG_COLORS.get('info', '\033[0m')}"
+                                    f"原文行数:{pack_text.count('\n') + 1}"
+                                    f"原文：{pack_text}"
+                                    f"{ LOG_COLORS.get('reset_color', '\033[0m')}")
+                        #保存json对象到文件
+                        with open('translation.json', 'w', encoding='utf-8') as f:
+                            json.dump(json_object, f, ensure_ascii=False, indent=4)  
+                    else:
+                        logger.warning(f"{ LOG_COLORS.get('warning', '\033[0m')}"
+                                        f"Error: response.choices[0].message.content"
+                                        f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                                       )
+
+            return
+
             if action_match is not None:
                 json_text, json_object = try_parse_json_object(
                     action_match.group(1).strip()
@@ -318,8 +434,33 @@ class ZhipuEngine(TranslationEngine):
 
         return differences
 
-        #
+    def split_list_into_chunks(self, str_list, max_count):
+        chunks = []
+        current_chunk = []
+        current_length = 0
+
+        for s in str_list:
+            # 计算当前字符串的长度
+            str_length = len(s)
+            # 如果当前子列表加上新字符串后长度会超过max_count，则开始一个新的子列表
+            if current_length + str_length > max_count:
+                chunks.append(current_chunk)
+                current_chunk = []
+                current_length = 0
+            # 将字符串添加到当前子列表，并更新当前子列表的长度
+            current_chunk.append(s)
+            current_length += str_length
+
+        # 添加最后一个子列表（如果有）
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        return chunks
 
 
 if __name__ == "__main__":
-    pass
+    translator = ZhipuEngine(
+        api_key="config/my_zhipu_api_key.json", config="my_zhipu_fy", lib_path="config"
+    )
+    translator.save_token_usage_file = "token_usage.json"
+    translator.translate("", "", "", "")

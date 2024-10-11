@@ -36,7 +36,13 @@ def time_to_pause():
                 f"工作 {total_seconds // 60} 分钟后休息。大约是："
                 f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_to_wait))}"
             )
-            time.sleep(session_time)
+
+            for i in range(total_seconds // 10):
+                time.sleep(10)
+                print("o", end="", flush=True)
+                if time.time() >= time_to_wait:
+                    print("时间到！")
+                    break
 
             total_time += session_time  # 累加到总工作时间
 
