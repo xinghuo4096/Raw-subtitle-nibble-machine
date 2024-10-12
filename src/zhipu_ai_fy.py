@@ -81,10 +81,18 @@ class ZhipuEngine(TranslationEngine):
             raise Exception(f"加载配置文件时发生错误：{e}")
 
     def translate(self, user_input, from_language, to_language, sleep_time):
-        movie1 = Media("Sloborn.S01E01")
+        movie_file_path='c:/test/d/Sloborn.S01E01.1080p.BluRay.x264-JustWatch.en.srt'
+        movie1 = Media(movie_file_path)
         movie1.add_subtitle(
-            "en", "c:/test/d/Sloborn.S01E01.1080p.BluRay.x264-JustWatch.en.srt"
+            "en", movie_file_path
         )
+
+
+        file_name = os.path.basename(movie_file_path)
+        # 去掉文件扩展名
+        file_name_without_extension = os.path.splitext(file_name)[0]
+        # 提取最后一个点之前的文件名部分
+        movie_main_name = file_name_without_extension.rsplit('.', 1)[0]
 
         sub = movie1.subtitles[0]
         assert isinstance(sub, Subtitle)
@@ -168,8 +176,9 @@ class ZhipuEngine(TranslationEngine):
                         action_match.group(1).strip()
                     )
                     # 定义 变量：翻译风格
-                    style_text =json.dumps(json_object["翻译风格"], ensure_ascii=False, indent=0)
-
+                    style_text = json.dumps(
+                        json_object["翻译风格"], ensure_ascii=False, indent=0
+                    )
 
                     messages.append({"role": "assistant", "content": style_text})
 
@@ -177,7 +186,6 @@ class ZhipuEngine(TranslationEngine):
                     user3 = user3.replace("[翻译风格]", style_text)
                     user3 = user3.replace("[待翻译剧本]", pack_text)
 
-                    
                     messages.append(
                         {
                             "role": "user",
@@ -205,18 +213,62 @@ class ZhipuEngine(TranslationEngine):
                         json_text, json_object = try_parse_json_object(
                             action_match.group(1).strip()
                         )
-                        logger.info(f"{ LOG_COLORS.get('info', '\033[0m')}"
-                                    f"原文行数:{pack_text.count('\n') + 1}"
-                                    f"原文：{pack_text}"
-                                    f"{ LOG_COLORS.get('reset_color', '\033[0m')}")
-                        #保存json对象到文件
-                        with open('translation.json', 'w', encoding='utf-8') as f:
-                            json.dump(json_object, f, ensure_ascii=False, indent=4)  
+                        result_text_dict = json_object["翻译结果"]
+                        logger.info(
+                            f"{ LOG_COLORS.get('info', '\033[0m')}"
+                            f"译文行数:{len(result_text_dict) + 1}"
+                            f"译文：{result_text_dict}"
+                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                        )
+
+                        logger.info(
+                            f"{ LOG_COLORS.get('info', '\033[0m')}"
+                            f"原文行数:{pack_text.count('\n') + 1}"
+                            f"原文：{pack_text}"
+                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                        )
+                        if (
+                            len(result_text_dict) + 1
+                            != pack_text.count("\n") + 1
+                        ):
+                            logger.info(
+                                f"{ LOG_COLORS.get('warning', '\033[0m')}"
+                                f"原文行数和译文行数不一致，请检查翻译结果"
+                                f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                            )
+                        else:
+                            logger.info(
+                                f"{ LOG_COLORS.get('info', '\033[0m')}"
+                                f"原文行数和译文行数一致，可以保存翻译结果"
+                                f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                            )
+
+                        
+                        # 保存
+                        pack_number = 1  # 假设这是你的序号
+
+                        # 构建新的文件名
+                        json_file_name_with_packnumber = f"{movie_main_name}_{pack_number}.json"
+                        
+                        with open(json_file_name_with_packnumber, "w", encoding="utf-8") as f:
+                            json.dump(json_object, f, ensure_ascii=False, indent=4)
+
+                       
+
+                        if result_text_dict:
+                            json_object = {
+                                "翻译风格": json_object["翻译风格"],
+                                "翻译结果": json_object["翻译结果"],
+                                "原文": pack_text,
+                                "译文": result_text_dict,
+                            }
+                        
                     else:
-                        logger.warning(f"{ LOG_COLORS.get('warning', '\033[0m')}"
-                                        f"Error: response.choices[0].message.content"
-                                        f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                                       )
+                        logger.warning(
+                            f"{ LOG_COLORS.get('warning', '\033[0m')}"
+                            f"Error: response.choices[0].message.content"
+                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
+                        )
 
             return
 
