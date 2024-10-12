@@ -18,15 +18,15 @@ class TranslationEngine:
         pass
 
     def translate(
-        self, text, from_language, to_language, sleep_time=0.5
-    ) -> tuple[str, str]:
+        self, text, from_language, to_language, sleep_time=0
+    ) -> Dict[str, str] | None:
         """
         抽象函数,不用abc.abstractmethod
         """
         raise Exception("translation().call.")
         return "error"
 
-    def make_fanyi_dict(self, fanyi_text: str, source: str):
+    def make_fanyi_dict(self, source: str, fanyi_text: str):
         """
         抽象函数 制作翻译词典
 

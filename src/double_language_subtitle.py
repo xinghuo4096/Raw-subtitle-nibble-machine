@@ -1,11 +1,12 @@
 import datetime
 import json
 import os
+import traceback
 from typing import Dict
 
 from Srt import save_srt
 
-from rsnm_log import setup_logging
+from rsnm_log import LogColors, setup_logging
 from translation_engine import TranslationEngine
 from translator import Media, Subtitle, TranslationDict, Translator, save_file
 
@@ -80,6 +81,7 @@ def make_double_lanague_subtitle(
     textpack = Translator.make_fanyi_packge(
         full_sentences=textlist, engine=translate_engner, string_max=max_package_size
     )
+    textpack = [s.strip() for s in textpack if s.strip()]
 
     fdict: Dict[str, str] = {}
     if use_dict:
@@ -88,43 +90,44 @@ def make_double_lanague_subtitle(
         fdict = dict1.dict
     else:
         # 这里是一组包，需要一个一个的翻译。
-        timecount = 0
+        pack_count = 0
         for item in textpack:
-            savefilename = f"{media}.{len(textpack)}.{timecount}.txt"
-            
+            savefilename = f"{media}.{len(textpack)}.{pack_count}.txt"
+            logger.info(
+                f"{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}"
+            )
 
-            json_string = t_engine.make_output_json(item)
-            fanyi_text = ""
+            fanyi_dict: Dict[str, str]
 
             # 如果存在savefilename文件，则加载
             if os.path.exists(savefilename):
                 # 打开savefilename文件读取内容
+
                 with open(savefilename, "r", encoding="utf-8") as fp:
-                    fanyi_text = fp.read()
+                    fanyi_dict = json.load(fp)
             else:
                 messagefun(
-                    f"{len(textpack)-timecount}", len(textpack), timecount, sleep_time
+                    f"{len(textpack)-pack_count}", len(textpack), pack_count, sleep_time
                 )
 
-                json_string = t_engine.make_output_json(item)
                 fanyiret = t_engine.translate(
-                    json_string, from_language, to_language, sleep_time
+                    item, from_language, to_language, sleep_time
                 )
                 if fanyiret is None:
-                    fanyi_text = ""
-                    logger.info("翻译失败")
-                    logger.info(
-                        f"{savefilename} 翻译失败,请修改，修改内容要和原文字数一样。"
+                    logger.warning(
+                        f"{LogColors.WARNING.value}"
+                        f"翻译失败，请检查日志翻译引擎放回的错误信息：\n"
+                        f"{LogColors.RESET_COLOR.value}"
                     )
                 else:
-                    fanyi_text, _ = fanyiret
+                    fanyi_dict = fanyiret
                     # 保存文件savefilename
-                    save_file(savefilename, fanyi_text)
+                    fanyi_json = json.dumps(fanyi_dict, ensure_ascii=False, indent=4)
+                    save_file(savefilename, fanyi_json)
 
-            if fanyi_text:
-                temp_dict = t_engine.make_fanyi_dict(fanyi_text, json_string)
-                fdict.update(temp_dict)
-            timecount += 1
+            if fanyi_dict:
+                fdict.update(fanyi_dict)
+            pack_count += 1
 
     subcn = movie1.add_language_subtitle("zh-CN")
     assert subcn == movie1.subtitles[1]

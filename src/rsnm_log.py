@@ -1,8 +1,17 @@
 import logging
 import logging.config
+from enum import Enum
+
+# 定义不同日志级别的颜色
 
 
-
+class LogColors(Enum):
+    DEBUG = "\033[1;34m"  # 蓝色
+    INFO = "\033[1;32m"  # 绿色
+    WARNING = "\033[1;33m"  # 黄色
+    ERROR = "\033[1;31m"  # 红色
+    CRITICAL = "\033[1;35m"  # 品红色
+    RESET_COLOR = "\033[0m"  # 重置颜色
 
 
 # 日志配置字典
@@ -10,7 +19,9 @@ default_logging_conf = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "detailed": {"format": "%(asctime)s[%(module)-20s] %(name)-15s %(levelname)-8s  %(message)s"},
+        "detailed": {
+            "format": "%(asctime)s[%(module)-20s] %(name)-15s %(levelname)-8s  %(message)s"
+        },
     },
     "handlers": {
         "console": {
@@ -36,15 +47,7 @@ default_logging_conf = {
         }
     },
 }
-# 定义不同日志级别的颜色
-LOG_COLORS = {
-    'debug': '\033[1;34m',  # 蓝色
-    'info': '\033[1;32m',    # 绿色
-    'warning': '\033[1;33m', # 黄色
-    'error': '\033[1;31m',   # 红色
-    'critical': '\033[1;35m' ,# 品红色
-    'reset_color':'\033[0m' # 重置颜色
-}
+
 
 def setup_logging(logging_conf=default_logging_conf):
     """
@@ -55,6 +58,7 @@ def setup_logging(logging_conf=default_logging_conf):
     """
     logging.config.dictConfig(logging_conf)
     return logging.getLogger(__name__)
+
 
 if __name__ == "__main__":
     # 设置日志并获取日志记录器

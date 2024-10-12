@@ -1,20 +1,19 @@
 import datetime
 import importlib
 import json
-import logging
-import logging.config
 import os
 import re
 import sys
-from typing import Dict
+import traceback
+from itertools import zip_longest
+from typing import Dict, List
 
 from json_repair import repair_json
 from zhipuai import ZhipuAI  # type: ignore
 
 from jzhipu_ai_json import try_parse_json_object
-from rsnm_log import LOG_COLORS, setup_logging
+from rsnm_log import LogColors, setup_logging
 from translation_engine import TranslationEngine
-from translator import Media, Subtitle
 
 logger = setup_logging()
 
@@ -57,7 +56,6 @@ class ZhipuEngine(TranslationEngine):
     def load_config(self, zhipu_config, lib_path="config"):
         try:
             # 动态加载 config 模块
-            # 显示当前工作目录
             current_directory = os.getcwd()
             logger.info(f"当前工作目录: {current_directory}")
 
@@ -80,30 +78,9 @@ class ZhipuEngine(TranslationEngine):
             logger.info(f"加载配置文件时发生错误：{e}")
             raise Exception(f"加载配置文件时发生错误：{e}")
 
-    def translate(self, user_input, from_language, to_language, sleep_time):
-        movie_file_path='c:/test/d/Sloborn.S01E01.1080p.BluRay.x264-JustWatch.en.srt'
-        movie1 = Media(movie_file_path)
-        movie1.add_subtitle(
-            "en", movie_file_path
-        )
-
-
-        file_name = os.path.basename(movie_file_path)
-        # 去掉文件扩展名
-        file_name_without_extension = os.path.splitext(file_name)[0]
-        # 提取最后一个点之前的文件名部分
-        movie_main_name = file_name_without_extension.rsplit('.', 1)[0]
-
-        sub = movie1.subtitles[0]
-        assert isinstance(sub, Subtitle)
-        sub.make_sentence()
-        textlist = sub.get_sentences_text()
-        split_text = self.split_list_into_chunks(textlist, 1024)
-
-        pack_text = "\n".join(split_text[0])
-
+    def call_zhipu_ai(self, user_input, from_language, to_language):
         messages = []
-
+        result_json = None
         try:
             messages.append(
                 {
@@ -113,7 +90,7 @@ class ZhipuEngine(TranslationEngine):
             )
 
             user1 = self.config.get("user_content_1")
-            user1 = user1.replace("srt剧情", pack_text)
+            user1 = user1.replace("srt剧情", user_input)
             messages.append(
                 {
                     "role": "user",
@@ -129,11 +106,10 @@ class ZhipuEngine(TranslationEngine):
                 max_tokens=self.config.get("max_tokens", 4095),
                 stream=False,
             )
-            result = ""
             logger.info(
-                LOG_COLORS.get("info")
+                LogColors.INFO.value
                 + f"client: {response}"
-                + LOG_COLORS.get("reset_color")
+                + LogColors.RESET_COLOR.value
             )
 
             action_match = PATTERN.search(response.choices[0].message.content)
@@ -155,6 +131,12 @@ class ZhipuEngine(TranslationEngine):
                     }
                 )
 
+                logger.info(
+                    LogColors.INFO.value
+                    + f"messages: {messages}"
+                    + LogColors.RESET_COLOR.value
+                )
+
                 response = self.client.chat.completions.create(
                     model=self.config.get("model", "glm-4-plus"),
                     messages=messages,
@@ -163,11 +145,10 @@ class ZhipuEngine(TranslationEngine):
                     max_tokens=self.config.get("max_tokens", 4095),
                     stream=False,
                 )
-                result = ""
                 logger.info(
-                    LOG_COLORS.get("info")
+                    LogColors.INFO.value
                     + f"client: {response}"
-                    + LOG_COLORS.get("reset_color")
+                    + LogColors.RESET_COLOR.value
                 )
 
                 action_match = PATTERN.search(response.choices[0].message.content)
@@ -180,17 +161,28 @@ class ZhipuEngine(TranslationEngine):
                         json_object["翻译风格"], ensure_ascii=False, indent=0
                     )
 
-                    messages.append({"role": "assistant", "content": style_text})
+                    messages = []
+                    messages.append(
+                        {
+                            "role": "system",
+                            "content": self.config.get("system_content"),
+                        }
+                    )
 
                     user3 = self.config.get("user_content_3")
                     user3 = user3.replace("[翻译风格]", style_text)
-                    user3 = user3.replace("[待翻译剧本]", pack_text)
+                    user3 = user3.replace("[待翻译剧本]", user_input)
 
                     messages.append(
                         {
                             "role": "user",
                             "content": user3,
                         }
+                    )
+                    logger.info(
+                        LogColors.INFO.value
+                        + f"messages: {messages}"
+                        + LogColors.RESET_COLOR.value
                     )
 
                     response = self.client.chat.completions.create(
@@ -201,11 +193,11 @@ class ZhipuEngine(TranslationEngine):
                         max_tokens=self.config.get("max_tokens", 4095),
                         stream=False,
                     )
-                    result = ""
+
                     logger.info(
-                        LOG_COLORS.get("info")
+                        LogColors.INFO.value
                         + f"client: {response}"
-                        + LOG_COLORS.get("reset_color")
+                        + LogColors.RESET_COLOR.value
                     )
 
                     action_match = PATTERN.search(response.choices[0].message.content)
@@ -213,91 +205,35 @@ class ZhipuEngine(TranslationEngine):
                         json_text, json_object = try_parse_json_object(
                             action_match.group(1).strip()
                         )
-                        result_text_dict = json_object["翻译结果"]
-                        logger.info(
-                            f"{ LOG_COLORS.get('info', '\033[0m')}"
-                            f"译文行数:{len(result_text_dict) + 1}"
-                            f"译文：{result_text_dict}"
-                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                        )
+                        if json_object is not None:
+                            result_json = json_object
 
-                        logger.info(
-                            f"{ LOG_COLORS.get('info', '\033[0m')}"
-                            f"原文行数:{pack_text.count('\n') + 1}"
-                            f"原文：{pack_text}"
-                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                        )
-                        if (
-                            len(result_text_dict) + 1
-                            != pack_text.count("\n") + 1
-                        ):
-                            logger.info(
-                                f"{ LOG_COLORS.get('warning', '\033[0m')}"
-                                f"原文行数和译文行数不一致，请检查翻译结果"
-                                f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                            )
-                        else:
-                            logger.info(
-                                f"{ LOG_COLORS.get('info', '\033[0m')}"
-                                f"原文行数和译文行数一致，可以保存翻译结果"
-                                f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                            )
-
-                        
-                        # 保存
-                        pack_number = 1  # 假设这是你的序号
-
-                        # 构建新的文件名
-                        json_file_name_with_packnumber = f"{movie_main_name}_{pack_number}.json"
-                        
-                        with open(json_file_name_with_packnumber, "w", encoding="utf-8") as f:
-                            json.dump(json_object, f, ensure_ascii=False, indent=4)
-
-                       
-
-                        if result_text_dict:
-                            json_object = {
-                                "翻译风格": json_object["翻译风格"],
-                                "翻译结果": json_object["翻译结果"],
-                                "原文": pack_text,
-                                "译文": result_text_dict,
-                            }
-                        
-                    else:
-                        logger.warning(
-                            f"{ LOG_COLORS.get('warning', '\033[0m')}"
-                            f"Error: response.choices[0].message.content"
-                            f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                        )
-
-            return
-
-            if action_match is not None:
-                json_text, json_object = try_parse_json_object(
-                    action_match.group(1).strip()
-                )
-
-                result = json.dumps(json_object, indent=4, ensure_ascii=False)
-
-                self.tokens_usage["prompt_tokens"] += response.usage.prompt_tokens
-                self.tokens_usage["completion_tokens"] += (
-                    response.usage.completion_tokens
-                )
-                self.tokens_usage["total_tokens"] += response.usage.total_tokens
-
-                return result, self.tokens_usage["total_tokens"]
-            else:
-                logger.warning(
-                    f"{ LOG_COLORS.get('warning', '\033[0m')}"
-                    f"Error: response.choices[0].message.content"
-                    f"{ LOG_COLORS.get('reset_color', '\033[0m')}"
-                )
-                return None
         except Exception as e:
-            logger.info(f"发生错误: {e}")
-            logger.info(f"{user_input} 翻译失败,请修改，修改内容要和原文字数一样。")
+            logger.error(
+                f"{LogColors.ERROR.value}"
+                f"翻译失败，请检查输入内容是否正确，错误信息：{e}\n"
+                f"traceback:{traceback.format_exc()}\n"
+                f"{LogColors.RESET_COLOR.value}"
+            )
+        return result_json
 
-            return None
+    def translate(
+        self, user_input, from_language, to_language, sleep_time=5
+    ) -> Dict[str, str] | None:
+        result_dict = None
+        try:
+            result_json = self.call_zhipu_ai(user_input, from_language, to_language)
+            result_text = result_json["s翻s译s结s果"]
+            result_dict = self.make_fanyi_dict(user_input, result_text)
+
+        except Exception as e:
+            # 显示出错堆栈和行号
+            logger.error(
+                f"{LogColors.ERROR.value}"
+                f"{e}\n 堆栈信息: {traceback.format_exc()}"
+                f"{LogColors.RESET_COLOR.value}"
+            )
+        return result_dict
 
     def make_output_json(self, inputText):
         # 将字符串按行拆分，并去除空行
@@ -314,7 +250,7 @@ class ZhipuEngine(TranslationEngine):
         json_string = json.dumps(json_data)
         return json_string
 
-    def make_fanyi_dict(self, zhipu_result, source) -> Dict[str, str]:
+    def make_fanyi_dict(self, source, zhipu_result) -> Dict[str, str]:
         """
         翻译词典
 
@@ -322,68 +258,25 @@ class ZhipuEngine(TranslationEngine):
 
         :return: dict[str,str],原文，译文
         """
-        line_dict: Dict[str, str] = {}
+        sub_dict: Dict[str, str] = {}
 
         # 执行比较
-        diff = self.compare_original_text(source, zhipu_result)
-
-        # 输出不同点
-        if diff:
+        source_lines = source.split("\n")
+        if len(zhipu_result) != len(source_lines):
             logger.warning(
-                f"{LOG_COLORS.get("warning")}"
-                f"原文和翻译结果不一致:{diff}"
-                f"{ LOG_COLORS.get('reset_color')}"
+                f"{ LogColors.WARNING.value}"
+                f"原文行数和译文行数不一致，请检查翻译结果 {len(source_lines)}!={len(zhipu_result)}"
+                f"source:{source_lines}"
+                f"zhipu_result:{zhipu_result}"
+                f"{LogColors.RESET_COLOR.value}"
             )
-        else:
-            logger.info(
-                f"{LOG_COLORS.get('info')}"
-                f"No differences found in '原文'."
-                f"{ LOG_COLORS.get('reset_color')}"
-            )
-        try:
-            # 将字符串解析为JSON对象
 
-            data = json.loads(zhipu_result)
+        sub_dict = self.zip_sub1_sub2(
+            source_lines,
+            zhipu_result,
+        )
 
-            # 提取剧情总结
-            summary = data.get("剧情总结", "")
-
-            # 提取翻译风格
-            style = data.get("翻译风格", {})
-
-            # 提取翻译结果
-            translations = data.get("翻译结果", [])
-
-            # 创建一个空字典来存储原文和译文的对应关系
-            original_to_translation_dict = {}
-
-            # 遍历翻译结果列表，将原文和译文添加到字典中
-            for item in translations:
-                original_text = item.get("原文", "")
-                translation_text = item.get("译文", "")
-                if len(translation_text) > 5 and not re.search(
-                    r"[\u4e00-\u9fa5]", translation_text
-                ):
-                    logger.warning(
-                        f"{ LOG_COLORS.get('warning')}"
-                        f"The line {translation_text}"
-                        f"does not contain Chinese characters."
-                        f"{ LOG_COLORS.get('reset_color')}"
-                    )
-                else:
-                    original_to_translation_dict[original_text] = translation_text
-
-            for (
-                original_text,
-                translation_text,
-            ) in original_to_translation_dict.items():
-                line_dict[original_text] = translation_text
-
-            # 打印结果
-        except json.JSONDecodeError as e:
-            logger.info(f"JSON解析错误: {e}")
-
-        return line_dict
+        return sub_dict
 
     def save_token_usage(self, file_path=None):
         if file_path is None:
@@ -458,10 +351,10 @@ class ZhipuEngine(TranslationEngine):
 
         if len(results1) != len(results2):
             logger.warning(
-                f"{LOG_COLORS.get('warning')}"
+                f"{LogColors.WARRING.value}"
                 f"两个JSON对象中的“翻译结果”数组长度不一致"
                 f"{len(results1)}-{len(results2)}"
-                f"{LOG_COLORS.get('reset_color')}"
+                f"{LogColors.RESET_COLOR.value}"
             )
 
         # 确保两个数组长度相同
@@ -509,10 +402,28 @@ class ZhipuEngine(TranslationEngine):
 
         return chunks
 
+    def zip_sub1_sub2(self, sub1, sub2) -> Dict[str, str]:
+        """
+        将两个列表按照顺序合并成一个字典，如果两个列表长度不一致，则将较短的列表用 None 填充
+        :param sub1: 第一个列表
+        :param sub2: 第二个列表
+        :return: 合并后的字典
+        :example:
+        >>> zip_sub1_sub2(["key1", "key2"], ["value1", "value2"])
+        """
+        merged_dict: Dict[str, str] = {}
+        for i, (key, value) in enumerate(zip_longest(sub1, sub2, fillvalue=None)):
+            # 如果 key 不是 None，直接使用 key
+            if key is not None:
+                if value is not None:
+                    merged_dict[key] = value
+                else:
+                    merged_dict[key] = f"None_{i+1}"
+            else:
+                # 如果 key 是 None，创建一个新的键
+                merged_dict[f"key_{i+1}"] = str(value)
+        return merged_dict
+
 
 if __name__ == "__main__":
-    translator = ZhipuEngine(
-        api_key="config/my_zhipu_api_key.json", config="my_zhipu_fy", lib_path="config"
-    )
-    translator.save_token_usage_file = "token_usage.json"
-    translator.translate("", "", "", "")
+    pass
