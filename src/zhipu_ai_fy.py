@@ -82,48 +82,13 @@ class ZhipuEngine(TranslationEngine):
         messages = []
         result_json = None
         try:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": self.config.get("system_content"),
-                }
-            )
+            self.generate_story_summary(user_input, messages)
+            action_match = self.call_zhipu_action(messages)
+            summary_text = self.get_story_summary(action_match)
 
-            user1 = self.config.get("user_content_1")
-            user1 = user1.replace("srt剧情", user_input)
-            messages.append(
-                {
-                    "role": "user",
-                    "content": user1,
-                }
-            )
-
-            response = self.client.chat.completions.create(
-                model=self.config.get("model", "glm-4-plus"),
-                messages=messages,
-                top_p=self.config.get("top_p", 0.7),
-                temperature=self.config.get("temperature", 0.95),
-                max_tokens=self.config.get("max_tokens", 4095),
-                stream=False,
-            )
-            logger.info(
-                LogColors.INFO.value
-                + f"client: {response}"
-                + LogColors.RESET_COLOR.value
-            )
-
-            action_match = PATTERN.search(response.choices[0].message.content)
-            if action_match is not None:
-                json_text, json_object = try_parse_json_object(
-                    action_match.group(1).strip()
-                )
-                # 定义 变量：剧情总结
-                summary_text = json_object["总结"]
-
+            if summary_text is not None:
                 messages.append({"role": "assistant", "content": summary_text})
-
                 user2 = self.config.get("user_content_2")
-
                 messages.append(
                     {
                         "role": "user",
@@ -131,27 +96,7 @@ class ZhipuEngine(TranslationEngine):
                     }
                 )
 
-                logger.info(
-                    LogColors.INFO.value
-                    + f"messages: {messages}"
-                    + LogColors.RESET_COLOR.value
-                )
-
-                response = self.client.chat.completions.create(
-                    model=self.config.get("model", "glm-4-plus"),
-                    messages=messages,
-                    top_p=self.config.get("top_p", 0.7),
-                    temperature=self.config.get("temperature", 0.95),
-                    max_tokens=self.config.get("max_tokens", 4095),
-                    stream=False,
-                )
-                logger.info(
-                    LogColors.INFO.value
-                    + f"client: {response}"
-                    + LogColors.RESET_COLOR.value
-                )
-
-                action_match = PATTERN.search(response.choices[0].message.content)
+                action_match = self.call_zhipu_action(messages)
                 if action_match is not None:
                     json_text, json_object = try_parse_json_object(
                         action_match.group(1).strip()
@@ -172,35 +117,14 @@ class ZhipuEngine(TranslationEngine):
                     user3 = self.config.get("user_content_3")
                     user3 = user3.replace("[翻译风格]", style_text)
                     user3 = user3.replace("[待翻译剧本]", user_input)
-
                     messages.append(
                         {
                             "role": "user",
                             "content": user3,
                         }
                     )
-                    logger.info(
-                        LogColors.INFO.value
-                        + f"messages: {messages}"
-                        + LogColors.RESET_COLOR.value
-                    )
 
-                    response = self.client.chat.completions.create(
-                        model=self.config.get("model", "glm-4-plus"),
-                        messages=messages,
-                        top_p=self.config.get("top_p", 0.7),
-                        temperature=self.config.get("temperature", 0.95),
-                        max_tokens=self.config.get("max_tokens", 4095),
-                        stream=False,
-                    )
-
-                    logger.info(
-                        LogColors.INFO.value
-                        + f"client: {response}"
-                        + LogColors.RESET_COLOR.value
-                    )
-
-                    action_match = PATTERN.search(response.choices[0].message.content)
+                    action_match = self.call_zhipu_action(messages)
                     if action_match is not None:
                         json_text, json_object = try_parse_json_object(
                             action_match.group(1).strip()
@@ -216,6 +140,53 @@ class ZhipuEngine(TranslationEngine):
                 f"{LogColors.RESET_COLOR.value}"
             )
         return result_json
+
+    def get_story_summary(self, action_match):
+        summary_text = None
+        if action_match is not None:
+            json_text, json_object = try_parse_json_object(
+                action_match.group(1).strip()
+            )
+            # 定义 变量：剧情总结
+            summary_text = json_object["总结"]
+        return summary_text
+
+    def generate_story_summary(self, user_input, messages):
+        messages.append(
+            {
+                "role": "system",
+                "content": self.config.get("system_content"),
+            }
+        )
+
+        user1 = self.config.get("user_content_1")
+        user1 = user1.replace("srt剧情", user_input)
+        messages.append(
+            {
+                "role": "user",
+                "content": user1,
+            }
+        )
+
+    def call_zhipu_action(self, messages):
+        logger.info(
+            LogColors.INFO.value + f"messages: {messages}" + LogColors.RESET_COLOR.value
+        )
+
+        response = self.client.chat.completions.create(
+            model=self.config.get("model", "glm-4-plus"),
+            messages=messages,
+            top_p=self.config.get("top_p", 0.7),
+            temperature=self.config.get("temperature", 0.95),
+            max_tokens=self.config.get("max_tokens", 4095),
+            stream=False,
+        )
+        logger.info(
+            LogColors.INFO.value + f"client: {response}" + LogColors.RESET_COLOR.value
+        )
+
+        action_match = PATTERN.search(response.choices[0].message.content)
+        return action_match
 
     def translate(
         self, user_input, from_language, to_language, sleep_time=5
