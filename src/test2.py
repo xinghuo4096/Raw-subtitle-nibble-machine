@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Dict
 
@@ -56,14 +57,14 @@ b1 = ["value1", "value2"]
 
 
 def zip_sub1_sub2(sub1, sub2) -> Dict[str, str]:
-    '''
+    """
     将两个列表按照顺序合并成一个字典，如果两个列表长度不一致，则将较短的列表用 None 填充
     :param sub1: 第一个列表
     :param sub2: 第二个列表
     :return: 合并后的字典
     :example:
     >>> zip_sub1_sub2(["key1", "key2"], ["value1", "value2"])
-    '''
+    """
     merged_dict: Dict[str, str] = {}
     for i, (key, value) in enumerate(zip_longest(sub1, sub2, fillvalue=None)):
         # 如果 key 不是 None，直接使用 key
@@ -77,48 +78,17 @@ def zip_sub1_sub2(sub1, sub2) -> Dict[str, str]:
             merged_dict[f"key_{i+1}"] = str(value)
     return merged_dict
 
+
 print(str(None))
 print(zip_sub1_sub2(a, b))
 print(zip_sub1_sub2(a1, b1))
 
 
- movie_file_path='c:/test/d/Sloborn.S01E01.1080p.BluRay.x264-JustWatch.en.srt'
-movie1 = Media(movie_file_path)
-movie1.add_subtitle(
-    "en", movie_file_path
-)
+result_dict = {"key1": "value1", "key2": "value2"}
+result_str = str(result_dict)
+print(result_str)
 
 
-file_name = os.path.basename(movie_file_path)
-# 去掉文件扩展名
-file_name_without_extension = os.path.splitext(file_name)[0]
-# 提取最后一个点之前的文件名部分
-movie_main_name = file_name_without_extension.rsplit('.', 1)[0]
-
-sub = movie1.subtitles[0]
-assert isinstance(sub, Subtitle)
-sub.make_sentence()
-textlist = sub.get_sentences_text()
-split_text = self.split_list_into_chunks(textlist, 1024)
-
-pack_text = "\n".join(split_text[0])
-
-# 保存
-                        pack_number = 1  # 假设这是你的序号
-
-                        # 构建新的文件名
-                        json_file_name_with_packnumber = f"{movie_main_name}_{pack_number}.json"
-                        
-                        with open(json_file_name_with_packnumber, "w", encoding="utf-8") as f:
-                            json.dump(json_object, f, ensure_ascii=False, indent=4)
-
-                       
-
-                        if result_text_dict:
-                            json_object = {
-                                "翻译风格": json_object["翻译风格"],
-                                "翻译结果": json_object["翻译结果"],
-                                "原文": pack_text,
-                                "译文": result_text_dict,
-                            }
-                        
+result_dict = {'key1': 'value1', 'key2': 'value2'}
+result_str = json.dumps(result_dict)
+print(result_str)

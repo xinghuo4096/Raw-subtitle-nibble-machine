@@ -82,55 +82,31 @@ class ZhipuEngine(TranslationEngine):
         messages = []
         result_json = None
         try:
-            self.generate_story_summary(user_input, messages)
+            messages = self.generate_story_summary_prompt(user_input, messages)
             action_match = self.call_zhipu_action(messages)
             summary_text = self.get_story_summary(action_match)
 
             if summary_text is not None:
-                messages.append({"role": "assistant", "content": summary_text})
-                user2 = self.config.get("user_content_2")
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": user2,
-                    }
+                messages = self.generate_translation_style_prompt(
+                    messages, summary_text
                 )
-
                 action_match = self.call_zhipu_action(messages)
-                if action_match is not None:
-                    json_text, json_object = try_parse_json_object(
-                        action_match.group(1).strip()
+                style_text = self.get_translation_style(action_match)
+                if style_text is not None:
+                    messages = self.generate_translation_prompt(
+                        user_input, from_language, to_language, style_text
                     )
-                    # 定义 变量：翻译风格
-                    style_text = json.dumps(
-                        json_object["翻译风格"], ensure_ascii=False, indent=0
-                    )
-
-                    messages = []
-                    messages.append(
-                        {
-                            "role": "system",
-                            "content": self.config.get("system_content"),
-                        }
-                    )
-
-                    user3 = self.config.get("user_content_3")
-                    user3 = user3.replace("[翻译风格]", style_text)
-                    user3 = user3.replace("[待翻译剧本]", user_input)
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": user3,
-                        }
-                    )
-
                     action_match = self.call_zhipu_action(messages)
-                    if action_match is not None:
-                        json_text, json_object = try_parse_json_object(
-                            action_match.group(1).strip()
+                    result_text = self.get_translation_result(action_match)
+                    if result_text is not None:
+                        result_dict = self.make_fanyi_dict(user_input, result_text)
+
+                        messages = []
+                        messages = self.generate_match_translation_prompt(
+                            messages, result_dict
                         )
-                        if json_object is not None:
-                            result_json = json_object
+                        action_match = self.call_zhipu_action(messages)
+
 
         except Exception as e:
             logger.error(
@@ -140,6 +116,77 @@ class ZhipuEngine(TranslationEngine):
                 f"{LogColors.RESET_COLOR.value}"
             )
         return result_json
+
+    def generate_match_translation_prompt(self, messages, result_dict):
+        user4 = self.config.get("user_content_4")
+        user4 = user4.replace("[需要配对的内容]", json.dumps(result_dict))
+
+        messages.append(
+            {
+                "role": "user",
+                "content": user4,
+            }
+        )
+
+        return messages
+
+    def get_translation_result(self, action_match):
+        result_text = None
+        if action_match is not None:
+            json_text, json_object = try_parse_json_object(
+                action_match.group(1).strip()
+            )
+            if json_object is not None:
+                result_text = json_object["s翻s译s结s果"]
+        return result_text
+
+    def generate_translation_prompt(
+        self, user_input, from_language, to_language, style_text
+    ):
+        messages = []
+        messages.append(
+            {
+                "role": "system",
+                "content": self.config.get("system_content"),
+            }
+        )
+
+        user3 = self.config.get("user_content_3")
+        user3 = user3.replace("[翻译风格]", style_text)
+        user3 = user3.replace("[待翻译剧本]", user_input)
+        user3 = user3.replace("[源语言]", from_language)
+        user3 = user3.replace("[目标语言]", to_language)
+        messages.append(
+            {
+                "role": "user",
+                "content": user3,
+            }
+        )
+
+        return messages
+
+    def get_translation_style(self, action_match):
+        style_text = None
+        if action_match is not None:
+            json_text, json_object = try_parse_json_object(
+                action_match.group(1).strip()
+            )
+            # 定义 变量：翻译风格
+            style_text = json.dumps(
+                json_object["翻译风格"], ensure_ascii=False, indent=0
+            )
+
+        return style_text
+
+    def generate_translation_style_prompt(self, messages, summary_text):
+        messages.append({"role": "assistant", "content": summary_text})
+        user2 = self.config.get("user_content_2")
+        messages.append(
+            {
+                "role": "user",
+                "content": user2,
+            }
+        )
 
     def get_story_summary(self, action_match):
         summary_text = None
@@ -151,7 +198,7 @@ class ZhipuEngine(TranslationEngine):
             summary_text = json_object["总结"]
         return summary_text
 
-    def generate_story_summary(self, user_input, messages):
+    def generate_story_summary_prompt(self, user_input, messages):
         messages.append(
             {
                 "role": "system",
@@ -167,6 +214,7 @@ class ZhipuEngine(TranslationEngine):
                 "content": user1,
             }
         )
+        return messages
 
     def call_zhipu_action(self, messages):
         logger.info(
@@ -194,7 +242,7 @@ class ZhipuEngine(TranslationEngine):
         result_dict = None
         try:
             result_json = self.call_zhipu_ai(user_input, from_language, to_language)
-            result_text = result_json["s翻s译s结s果"]
+
             result_dict = self.make_fanyi_dict(user_input, result_text)
 
         except Exception as e:
