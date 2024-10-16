@@ -23,7 +23,7 @@ if __name__ == "__main__":
         And we become different.",
     )
     for i in range(len(text)):
-        translated_text = translator.translate(text[i])
+        translated_text = translator.translate(text[i],'英文','中文')
         if translated_text:
             print(f"翻译 {i+1}:\n {translated_text}")
     translator.save_token_usage()
