@@ -11,6 +11,10 @@
 1. 百度智能云的文本翻译-通用版（2024年9月30日）
 <https://cloud.baidu.com/product/mt/text_trans>
 
+2. 智谱AI-GLM-4-Plus （2024年10月17日）
+<https://www.zhipuai.cn/>
+
+
 ## 安装requirements.txt
 
 这个 `requirements.txt` 文件列出了几个 Python 库及其特定版本，这些库通常用于网络请求和字符编码处理。以下是每个库的简要说明：

@@ -10,6 +10,9 @@ Current Engine:
 1. Baidu Intelligent Cloud Text Translation - General Version (as of September 30, 2024)
 <https://cloud.baidu.com/product/mt/text_trans>
 
+2.Zhipu AI-GLM-4-Plus (October 17, 2024) 
+https://www.zhipuai.cn/
+
 ## Install requirements.txt
 
 This `requirements.txt` file lists several Python libraries and their specific versions, which are commonly used for web requests and character encoding processing. Here is a brief description of each library:
