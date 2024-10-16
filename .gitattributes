@@ -1,8 +1,8 @@
 * !filter !diff
-#.secrets/** filter=git-crypt diff=git-crypt
+.secrets/** filter=git-crypt diff=git-crypt
 config/test1.test.txt filter=git-crypt diff=git-crypt
 test1.test.txt filter=git-crypt diff=git-crypt
-#config/my_zhipu_fy.py  filter=git-crypt diff=git-crypt
-#config/mykeys.json filter=git-crypt diff=git-crypt
-#config/my_zhipu_api_key.json filter=git-crypt diff=git-crypt
-#config/my_zhipu_fy.config.json filter=git-crypt diff=git-crypt
+config/my_zhipu_fy.py  filter=git-crypt diff=git-crypt
+config/mykeys.json filter=git-crypt diff=git-crypt
+config/my_zhipu_api_key.json filter=git-crypt diff=git-crypt
+config/my_zhipu_fy.config.json filter=git-crypt diff=git-crypt
