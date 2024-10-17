@@ -116,7 +116,7 @@ def make_double_lanague_subtitle(
                 if fanyiret is None:
                     logger.warning(
                         f"{LogColors.WARNING.value}"
-                        f"翻译失败，请检查日志翻译引擎放回的错误信息：\n"
+                        f"翻译失败，{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}，请检查日志翻译引擎放回的错误信息：\n"
                         f"{LogColors.RESET_COLOR.value}"
                     )
                 else:

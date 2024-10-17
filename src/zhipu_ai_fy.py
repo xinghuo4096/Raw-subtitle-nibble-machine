@@ -80,8 +80,7 @@ class ZhipuEngine(TranslationEngine):
 
     def call_zhipu_ai(self, user_input, from_language, to_language):
         messages = []
-        result_json = None
-        fanyi_dict2= None
+        fanyi_dict2 = None
         try:
             messages = self.generate_story_summary_prompt(user_input, messages)
             summary_text = self.get_story_summary(messages)
@@ -101,7 +100,9 @@ class ZhipuEngine(TranslationEngine):
                         messages = self.generate_match_translation_prompt(
                             messages, fanyi_dict
                         )
-                        fanyi_dict2 = self.get_match_translation_dict(user_input,messages)
+                        fanyi_dict2 = self.get_match_translation_dict(
+                            user_input, messages
+                        )
                         return fanyi_dict2
 
         except Exception as e:
@@ -111,25 +112,29 @@ class ZhipuEngine(TranslationEngine):
                 f"traceback:{traceback.format_exc()}\n"
                 f"{LogColors.RESET_COLOR.value}"
             )
-        return result_json
+        return fanyi_dict2
 
     def get_match_translation_dict(self, user_input, messages):
         action_match = self.call_zhipu_action(messages)
         result_json = None
-        fanyi_dict= None
+        fanyi_dict = None
         if action_match is not None:
             json_text, json_object = try_parse_json_object(
                 action_match.group(1).strip()
             )
             if json_object is not None:
                 result_json = json_object["s配s对s结s果s"]
-                fanyi_dict = self.make_fanyi_dict(user_input,  list(result_json.values()))
+                result_txts = "\n".join(list(result_json.values()))
+                fanyi_dict = self.make_fanyi_dict(user_input, result_txts)
 
         return fanyi_dict
 
     def generate_match_translation_prompt(self, messages, result_dict):
         user4 = self.config.get("user_content_4")
-        user4 = user4.replace("[需要配对的内容]", json.dumps(result_dict,ensure_ascii=False, indent=0))
+        text = json.dumps(
+            result_dict, ensure_ascii=False, indent=None, separators=(",", ":")
+        )
+        user4 = user4.replace("[需要配对的内容]", text)
 
         messages.append(
             {
@@ -151,17 +156,23 @@ class ZhipuEngine(TranslationEngine):
             if json_object is not None:
                 result_json = json_object["s翻s译s结s果"]
                 if result_json is not None:
-                    fanyi_dict = self.make_fanyi_dict(user_input, result_json)
+                    # 使用列表推导式提取所有的译文
+                    all_translation = [
+                        translation["译文"] for translation in result_json
+                    ]
+                    all_translation = "\n".join(all_translation)
+                    fanyi_dict = self.make_fanyi_dict(user_input, all_translation)
         return fanyi_dict
 
     def generate_translation_prompt(
         self, user_input, from_language, to_language, style_text
     ):
         messages = []
+        system_content = self.config.get("system_content")
         messages.append(
             {
                 "role": "system",
-                "content": self.config.get("system_content"),
+                "content": system_content,
             }
         )
 
@@ -189,7 +200,10 @@ class ZhipuEngine(TranslationEngine):
             )
             # 定义 变量：翻译风格
             style_text = json.dumps(
-                json_object["翻译风格"], ensure_ascii=False, indent=0
+                json_object["翻译风格"],
+                ensure_ascii=False,
+                indent=None,
+                separators=(",", ":"),
             )
 
         return style_text
@@ -259,6 +273,11 @@ class ZhipuEngine(TranslationEngine):
     ) -> Dict[str, str] | None:
         result_dict = None
         try:
+            if from_language == "en":
+                from_language = "英文"
+            if to_language == "zh-CN":
+                to_language = "中文"
+
             result_dict = self.call_zhipu_ai(user_input, from_language, to_language)
         except Exception as e:
             # 显示出错堆栈和行号
@@ -284,7 +303,7 @@ class ZhipuEngine(TranslationEngine):
         json_string = json.dumps(json_data)
         return json_string
 
-    def make_fanyi_dict(self, source, zhipu_result) -> Dict[str, str]:
+    def make_fanyi_dict(self, origina, translation) -> Dict[str, str]:
         """
         翻译词典
 
@@ -295,19 +314,18 @@ class ZhipuEngine(TranslationEngine):
         sub_dict: Dict[str, str] = {}
 
         # 执行比较
-        source_lines = source.split("\n")
-        if len(zhipu_result) != len(source_lines):
+        source_lines = origina.split("\n")
+        translation_lines = [line for line in translation.splitlines() if line]
+        if len(translation_lines) != len(source_lines):
             logger.warning(
                 f"{ LogColors.WARNING.value}"
-                f"原文行数和译文行数不一致，请检查翻译结果 {len(source_lines)}!={len(zhipu_result)}"
-                f"source:{source_lines}"
-                f"zhipu_result:{zhipu_result}"
+                f"原文行数和译文行数不一致，请检查翻译结果 {len(source_lines)}!={len(translation_lines)}"
                 f"{LogColors.RESET_COLOR.value}"
             )
 
         sub_dict = self.zip_sub1_sub2(
             source_lines,
-            zhipu_result,
+            translation_lines,
         )
 
         return sub_dict
@@ -452,10 +470,10 @@ class ZhipuEngine(TranslationEngine):
                 if value is not None:
                     merged_dict[key] = value
                 else:
-                    merged_dict[key] = f"None_{i+1}"
+                    merged_dict[key] = f"Value_None_{i+1}"
             else:
                 # 如果 key 是 None，创建一个新的键
-                merged_dict[f"None_{i+1}"] = str(value)
+                merged_dict[f"Key_None_{i+1}"] = str(value)
         return merged_dict
 
 

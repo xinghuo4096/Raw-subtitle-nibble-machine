@@ -139,9 +139,7 @@ def main_batch2():
 
     # 注意工作目录
     translator = ZhipuEngine(
-        api_key="config/my_zhipu_api_key.json",
-        config="my_zhipu_fy",
-        lib_path="config"
+        api_key="config/my_zhipu_api_key.json", config="my_zhipu_fy", lib_path="config"
     )
     translator.save_token_usage_file = "token_usage.json"
 
@@ -150,7 +148,6 @@ def main_batch2():
     os.chdir(mpath)
     # 配置翻译引擎
 
-    
     flist = os.listdir(".")
     i = 1
     for item in flist:
@@ -175,6 +172,8 @@ def main_batch2():
                     translate_engner=translator,
                     messagefun=translator.zhipuai_subtitle_message,
                     use_dict=False,
+                    from_language="en",
+                    to_language="zh-CN",
                 )
                 make_subtile_glossary_fun2(
                     f"{fname}.cn.1.srt", f"{fname}.cn.2.srt", "../indata/glossary.txt"

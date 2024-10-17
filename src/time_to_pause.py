@@ -72,7 +72,7 @@ def time_to_pause():
                 title="休息提醒",
                 message=detail,
                 app_icon=None,  # 可以设置图标路径
-                timeout=6,  # 通知显示时间
+                timeout=60,  # 通知显示时间
                 app_name="休息提醒",  # 应用名称
                 ticker="休息提醒",  # 通知标题
             )
