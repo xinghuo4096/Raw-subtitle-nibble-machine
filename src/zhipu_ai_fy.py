@@ -80,7 +80,11 @@ class ZhipuEngine(TranslationEngine):
 
     def call_zhipu_ai(self, user_input, from_language, to_language):
         messages = []
+        fanyi_dict = None
         fanyi_dict2 = None
+        have_match = False
+        summary_text = ""
+        style_text = ""
         try:
             messages = self.generate_story_summary_prompt(user_input, messages)
             summary_text = self.get_story_summary(messages)
@@ -92,18 +96,31 @@ class ZhipuEngine(TranslationEngine):
                 style_text = self.get_translation_style(messages)
                 if style_text is not None:
                     messages = self.generate_translation_prompt(
-                        user_input, from_language, to_language, style_text
+                        user_input=user_input,
+                        from_language=from_language,
+                        to_language=to_language,
+                        summary_text=summary_text,
+                        style_text=style_text,
                     )
-                    fanyi_dict = self.get_translation_result(user_input, messages)
+                    fanyi_dict, have_match = self.get_translation_dict(
+                        user_input, messages
+                    )
+
                     if fanyi_dict is not None:
-                        messages = []
-                        messages = self.generate_match_translation_prompt(
-                            messages, fanyi_dict
-                        )
-                        fanyi_dict2 = self.get_match_translation_dict(
-                            user_input, messages
-                        )
-                        return fanyi_dict2
+                        fanyi_dict2 = fanyi_dict
+                        if not have_match:
+                            logger.info(
+                                f"{ LogColors.INFO.value}"
+                                f"发现不匹配，开始修复"
+                                f"{LogColors.RESET_COLOR.value}"
+                            )
+                            messages = []
+                            messages = self.generate_match_translation_prompt(
+                                messages, user_input, fanyi_dict
+                            )
+                            fanyi_dict2 = self.get_match_translation_dict(
+                                user_input, messages
+                            )
 
         except Exception as e:
             logger.error(
@@ -125,16 +142,40 @@ class ZhipuEngine(TranslationEngine):
             if json_object is not None:
                 result_json = json_object["s配s对s结s果s"]
                 result_txts = "\n".join(list(result_json.values()))
-                fanyi_dict = self.make_fanyi_dict(user_input, result_txts)
+                fanyi_dict, have_match = self.make_fanyi_dict(user_input, result_txts)
+                if not have_match:
+                    logger.warning(
+                        f"{ LogColors.WARNING.value}"
+                        f"修复失败，原文行数和译文行数不一致。"
+                        f"{LogColors.RESET_COLOR.value}"
+                    )
 
         return fanyi_dict
 
-    def generate_match_translation_prompt(self, messages, result_dict):
+    def generate_match_translation_prompt(self, messages, user_input, result_dict):
         user4 = self.config.get("user_content_4")
         text = json.dumps(
             result_dict, ensure_ascii=False, indent=None, separators=(",", ":")
         )
-        user4 = user4.replace("[需要配对的内容]", text)
+        keys = []
+        values = []
+
+        # 遍历字典并将键和值分别添加到对应的数组中
+        for key, value in result_dict.items():
+            keys.append(key)
+            values.append(value)
+        user_lines = user_input.split("\n")
+
+        fanyi_dict = {line: "译文" for line in user_lines}
+
+        user_json = json.dumps(
+            fanyi_dict, ensure_ascii=False, indent=None, separators=(",", ":")
+        )
+        values_json = json.dumps(
+            values, ensure_ascii=False, indent=None, separators=(",", ":")
+        )
+        user4 = user4.replace("[需要配对的内容的原文]", user_json)
+        user4 = user4.replace("[参考译文]", values_json)
 
         messages.append(
             {
@@ -145,27 +186,24 @@ class ZhipuEngine(TranslationEngine):
 
         return messages
 
-    def get_translation_result(self, user_input, messages):
+    def get_translation_dict(self, user_input, messages):
         fanyi_dict = None
         action_match = self.call_zhipu_action(messages)
-        result_json = None
+        result_text = None
         if action_match is not None:
             json_text, json_object = try_parse_json_object(
                 action_match.group(1).strip()
             )
             if json_object is not None:
-                result_json = json_object["s翻s译s结s果"]
-                if result_json is not None:
-                    # 使用列表推导式提取所有的译文
-                    all_translation = [
-                        translation["译文"] for translation in result_json
-                    ]
-                    all_translation = "\n".join(all_translation)
-                    fanyi_dict = self.make_fanyi_dict(user_input, all_translation)
-        return fanyi_dict
+                result_text = json_object["s翻s译s结s果s"].split("\n")
+                if result_text is not None:
+                    fanyi_dict, have_match = self.make_fanyi_dict(
+                        user_input, result_text
+                    )
+        return fanyi_dict, have_match
 
     def generate_translation_prompt(
-        self, user_input, from_language, to_language, style_text
+        self, user_input, from_language, to_language, summary_text, style_text
     ):
         messages = []
         system_content = self.config.get("system_content")
@@ -176,11 +214,12 @@ class ZhipuEngine(TranslationEngine):
             }
         )
 
-        user3 = self.config.get("user_content_3")
+        user3 = self.config.get("user_content_5")
         user3 = user3.replace("[翻译风格]", style_text)
-        user3 = user3.replace("[待翻译剧本]", user_input)
         user3 = user3.replace("[源语言]", from_language)
         user3 = user3.replace("[目标语言]", to_language)
+        user3 = user3.replace("[待翻译影视字幕]", user_input)
+
         messages.append(
             {
                 "role": "user",
@@ -200,6 +239,7 @@ class ZhipuEngine(TranslationEngine):
             )
             # 定义 变量：翻译风格
             style_text = json.dumps(
+                # TODO 修改为字符串
                 json_object["翻译风格"],
                 ensure_ascii=False,
                 indent=None,
@@ -303,7 +343,7 @@ class ZhipuEngine(TranslationEngine):
         json_string = json.dumps(json_data)
         return json_string
 
-    def make_fanyi_dict(self, origina, translation) -> Dict[str, str]:
+    def make_fanyi_dict(self, origina, translation) -> tuple[dict[str, str], bool]:
         """
         翻译词典
 
@@ -312,11 +352,13 @@ class ZhipuEngine(TranslationEngine):
         :return: dict[str,str],原文，译文
         """
         sub_dict: Dict[str, str] = {}
+        have_match = True
 
         # 执行比较
         source_lines = origina.split("\n")
-        translation_lines = [line for line in translation.splitlines() if line]
+        translation_lines = translation
         if len(translation_lines) != len(source_lines):
+            have_match = False
             logger.warning(
                 f"{ LogColors.WARNING.value}"
                 f"原文行数和译文行数不一致，请检查翻译结果 {len(source_lines)}!={len(translation_lines)}"
@@ -328,7 +370,7 @@ class ZhipuEngine(TranslationEngine):
             translation_lines,
         )
 
-        return sub_dict
+        return sub_dict, have_match
 
     def save_token_usage(self, file_path=None):
         if file_path is None:

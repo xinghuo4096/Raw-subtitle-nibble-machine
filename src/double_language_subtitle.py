@@ -97,7 +97,7 @@ def make_double_lanague_subtitle(
                 f"{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}"
             )
 
-            fanyi_dict: Dict[str, str]
+            fanyi_dict: Dict[str, str] = {}
 
             # 如果存在savefilename文件，则加载
             if os.path.exists(savefilename):
