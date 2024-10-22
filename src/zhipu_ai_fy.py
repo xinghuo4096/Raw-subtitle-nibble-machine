@@ -18,6 +18,7 @@ from translation_engine import TranslationEngine
 logger = setup_logging()
 
 PATTERN = re.compile(r"```(?:json\s+)?(\W.*?)```", re.DOTALL)
+PATTERN2 = re.compile(r"```json\s+(.*?)```", re.DOTALL)
 
 
 class ZhipuEngine(TranslationEngine):
@@ -78,51 +79,32 @@ class ZhipuEngine(TranslationEngine):
             logger.info(f"加载配置文件时发生错误：{e}")
             raise Exception(f"加载配置文件时发生错误：{e}")
 
-    def call_zhipu_ai(self, user_input, from_language, to_language):
+    def call_zhipu_ai(self, user_text, from_language, to_language):
         messages = []
         fanyi_dict = None
-        fanyi_dict2 = None
         have_match = False
-        summary_text = ""
-        style_text = ""
-        user_lines = user_input.split("\n")
+        user_lines = user_text.split("\n")
+        user_new_text = "<字幕断句>".join(user_lines)  # user_text  #
         try:
-            messages = self.generate_story_summary_prompt(user_input, messages)
-            summary_text = self.get_story_summary(messages)
+            have_match = False
+            fanyi_dict = None
+            messages = []
+            messages = self.generate_translation_prompt(
+                user_new_text, from_language, to_language
+            )
 
-            if summary_text is not None:
-                messages = self.generate_translation_style_prompt(
-                    messages, summary_text
-                )
-                style_text = self.get_translation_style(messages)
-                if style_text is not None:
-                    messages = self.generate_translation_prompt(
-                        user_input=user_input,
-                        from_language=from_language,
-                        to_language=to_language,
-                        summary_text=summary_text,
-                        style_text=style_text,
-                    )
-                    fanyi_dict, have_match = self.get_translation_dict(
-                        user_input, messages
-                    )
+            result_lines = self.generate_translation(messages)
 
-                    if fanyi_dict is not None:
-                        fanyi_dict2 = fanyi_dict
-                        if not have_match:
-                            logger.info(
-                                f"{ LogColors.INFO.value}"
-                                f"发现不匹配，开始修复"
-                                f"{LogColors.RESET_COLOR.value}"
-                            )
-                            messages = []
-                            messages = self.generate_match_translation_prompt(
-                                messages, user_input, fanyi_dict
-                            )
-                            fanyi_dict2 = self.get_match_translation_dict(
-                                user_input, messages
-                            )
+            if result_lines is not None:
+                fanyi_dict, have_match = self.make_fanyi_dict(user_lines, result_lines)
 
+                if fanyi_dict is not None:
+                    if not have_match:
+                        logger.warn(
+                            f"{ LogColors.WARNING.value}"
+                            f"发现不匹配"
+                            f"{LogColors.RESET_COLOR.value}"
+                        )
         except Exception as e:
             logger.error(
                 f"{LogColors.ERROR.value}"
@@ -130,82 +112,9 @@ class ZhipuEngine(TranslationEngine):
                 f"traceback:{traceback.format_exc()}\n"
                 f"{LogColors.RESET_COLOR.value}"
             )
-        return fanyi_dict2
-
-    def get_match_translation_dict(self, user_input, messages):
-        action_match = self.call_zhipu_action(messages)
-        result_json = None
-        fanyi_dict = None
-        if action_match is not None:
-            json_text, json_object = try_parse_json_object(
-                action_match.group(1).strip()
-            )
-            if json_object is not None:
-                result_json = json_object["s配s对s结s果s"]
-                result_txts = "\n".join(list(result_json.values()))
-                fanyi_dict, have_match = self.make_fanyi_dict(user_input, result_txts)
-                if not have_match:
-                    logger.warning(
-                        f"{ LogColors.WARNING.value}"
-                        f"修复失败，原文行数和译文行数不一致。"
-                        f"{LogColors.RESET_COLOR.value}"
-                    )
-
         return fanyi_dict
 
-    def generate_match_translation_prompt(self, messages, user_input, result_dict):
-        user4 = self.config.get("user_content_4")
-        text = json.dumps(
-            result_dict, ensure_ascii=False, indent=None, separators=(",", ":")
-        )
-        keys = []
-        values = []
-
-        # 遍历字典并将键和值分别添加到对应的数组中
-        for key, value in result_dict.items():
-            keys.append(key)
-            values.append(value)
-        user_lines = user_input.split("\n")
-
-        fanyi_dict = {line: "译文" for line in user_lines}
-
-        user_json = json.dumps(
-            fanyi_dict, ensure_ascii=False, indent=None, separators=(",", ":")
-        )
-        values_json = json.dumps(
-            values, ensure_ascii=False, indent=None, separators=(",", ":")
-        )
-        user4 = user4.replace("[需要配对的内容的原文]", user_json)
-        user4 = user4.replace("[参考译文]", values_json)
-
-        messages.append(
-            {
-                "role": "user",
-                "content": user4,
-            }
-        )
-
-        return messages
-
-    def get_translation_dict(self, user_input, messages):
-        fanyi_dict = None
-        action_match = self.call_zhipu_action(messages)
-        result_text = None
-        if action_match is not None:
-            json_text, json_object = try_parse_json_object(
-                action_match.group(1).strip()
-            )
-            if json_object is not None:
-                result_text = json_object["s翻s译s结s果s"]
-                if result_text is not None:
-                    fanyi_dict, have_match = self.make_fanyi_dict(
-                        user_input, result_text
-                    )
-        return fanyi_dict, have_match
-
-    def generate_translation_prompt(
-        self, user_input, from_language, to_language, summary_text, style_text
-    ):
+    def generate_translation_prompt(self, user_text, from_language, to_language):
         messages = []
         system_content = self.config.get("system_content")
         messages.append(
@@ -214,80 +123,43 @@ class ZhipuEngine(TranslationEngine):
                 "content": system_content,
             }
         )
-
-        user3 = self.config.get("user_content_5")
-        user3 = user3.replace("[翻译风格]", style_text)
-        user3 = user3.replace("[源语言]", from_language)
-        user3 = user3.replace("[目标语言]", to_language)
-        user3 = user3.replace("[待翻译影视字幕]", user_input)
+        user_prompt = self.config.get("user_content_6")
+        user_prompt = user_prompt.replace("[源语言]", from_language)
+        user_prompt = user_prompt.replace("[目标语言]", to_language)
+        user_prompt = user_prompt.replace("[待翻译影视字幕]", user_text)
 
         messages.append(
             {
                 "role": "user",
-                "content": user3,
+                "content": user_prompt,
             }
         )
 
         return messages
 
-    def get_translation_style(self, messages):
-        action_match = self.call_zhipu_action(messages)
+    def generate_translation(self, messages):
+        result_list = None
 
-        style_text = None
-        if action_match is not None:
-            json_text, json_object = try_parse_json_object(
-                action_match.group(1).strip()
-            )
-            # 定义 变量：翻译风格
-            style_text = json.dumps(
-                # TODO 修改为字符串
-                json_object["翻译风格"],
-                ensure_ascii=False,
-                indent=None,
-                separators=(",", ":"),
-            )
+        for i in range(3):
+            try:
+                action_match = self.call_zhipu_action(messages)
+                text = action_match.group(1).strip()
 
-        return style_text
+                if action_match is not None:
+                    json_text, json_object = try_parse_json_object(text)
+                if json_object is not None:
+                    result_list = json_object["s翻s译s结s果s"]
+                    # 正确取到结果
+                    break
+            except Exception as e:
+                logger.error(
+                    f"{LogColors.ERROR.value}"
+                    f"翻译失败，请检查输入内容是否正确，错误信息：{e}\n"
+                    f"traceback:{traceback.format_exc()}\n"
+                    f"{LogColors.RESET_COLOR.value}"
+                )
 
-    def generate_translation_style_prompt(self, messages, summary_text):
-        messages.append({"role": "assistant", "content": summary_text})
-        user2 = self.config.get("user_content_2")
-        messages.append(
-            {
-                "role": "user",
-                "content": user2,
-            }
-        )
-        return messages
-
-    def get_story_summary(self, messages):
-        action_match = self.call_zhipu_action(messages)
-        summary_text = None
-        if action_match is not None:
-            json_text, json_object = try_parse_json_object(
-                action_match.group(1).strip()
-            )
-            # 定义 变量：剧情总结
-            summary_text = json_object["总结"]
-        return summary_text
-
-    def generate_story_summary_prompt(self, user_input, messages):
-        messages.append(
-            {
-                "role": "system",
-                "content": self.config.get("system_content"),
-            }
-        )
-
-        user1 = self.config.get("user_content_1")
-        user1 = user1.replace("srt剧情", user_input)
-        messages.append(
-            {
-                "role": "user",
-                "content": user1,
-            }
-        )
-        return messages
+        return result_list
 
     def call_zhipu_action(self, messages):
         logger.info(
@@ -306,7 +178,7 @@ class ZhipuEngine(TranslationEngine):
             LogColors.INFO.value + f"client: {response}" + LogColors.RESET_COLOR.value
         )
 
-        action_match = PATTERN.search(response.choices[0].message.content)
+        action_match = PATTERN2.search(response.choices[0].message.content)
         return action_match
 
     def translate(
@@ -329,22 +201,9 @@ class ZhipuEngine(TranslationEngine):
             )
         return result_dict
 
-    def make_output_json(self, inputText):
-        # 将字符串按行拆分，并去除空行
-        lines = [line.strip() for line in inputText.split("\n") if line.strip()]
-
-        # 组装成包含 'id', '原文', '译文' 的JSON格式
-        json_data = json.loads(self.config["output_json"])
-
-        t_result = json_data["翻译结果"]
-        for index, line in enumerate(lines, start=1):
-            t_result.append({"id": index, "原文": line, "译文": ""})
-
-        # 将字典转换为JSON字符串
-        json_string = json.dumps(json_data)
-        return json_string
-
-    def make_fanyi_dict(self, origina, translation) -> tuple[dict[str, str], bool]:
+    def make_fanyi_dict(
+        self, source_lines: list, translation_lines: list
+    ) -> tuple[dict[str, str], bool]:
         """
         翻译词典
 
@@ -355,16 +214,8 @@ class ZhipuEngine(TranslationEngine):
         sub_dict: Dict[str, str] = {}
         have_match = True
 
-        # 执行比较
-        source_lines = origina.split("\n")
-        translation_lines = translation.split("\n")
         if len(translation_lines) != len(source_lines):
             have_match = False
-            logger.warning(
-                f"{ LogColors.WARNING.value}"
-                f"原文行数和译文行数不一致，请检查翻译结果 {len(source_lines)}!={len(translation_lines)}"
-                f"{LogColors.RESET_COLOR.value}"
-            )
 
         sub_dict = self.zip_sub1_sub2(
             source_lines,
@@ -410,93 +261,6 @@ class ZhipuEngine(TranslationEngine):
         print(text1)
         return
 
-    def clean_text(text):
-        # 去除多余空格
-        text = re.sub(r"\s+", "", text)
-        # 去除特殊字符
-        text = re.sub(r"[^\w\s]", "", text)
-        # 转换为小写
-        text = text.lower()
-        return text
-
-    def normalize_punctuation(text):
-        # 标准化标点符号（这里简单地移除了它们）
-        text = re.sub(r"[.,!?;:]", "", text)
-        return text
-
-    # 比较翻译前和翻译后的原文是否一致
-    def compare_original_text(self, original_text, translation_text):
-        differences = []
-
-        dict1 = json.loads(original_text)
-        dict2 = json.loads(translation_text)
-
-        # 获取两个JSON对象中的“翻译结果”数组
-        results1 = dict1.get("翻译结果", [])
-        results2 = dict2.get("翻译结果", [])
-
-        results1 = [
-            ZhipuEngine.normalize_punctuation(ZhipuEngine.clean_text(x.get("原文")))
-            for x in results1
-        ]
-        results2 = [
-            ZhipuEngine.normalize_punctuation(ZhipuEngine.clean_text(x.get("原文")))
-            for x in results2
-        ]
-
-        if len(results1) != len(results2):
-            logger.warning(
-                f"{LogColors.WARRING.value}"
-                f"两个JSON对象中的“翻译结果”数组长度不一致"
-                f"{len(results1)}-{len(results2)}"
-                f"{LogColors.RESET_COLOR.value}"
-            )
-
-        # 确保两个数组长度相同
-        max_len = max(len(results1), len(results2))
-        for i in range(max_len):
-            result1 = results1[i] if i < len(results1) else None
-            result2 = results2[i] if i < len(results2) else None
-
-            if result1 and result2:
-                if result1 != result2:
-                    differences.append(
-                        f"Difference at index {i+1}: {result1} != {result2}"
-                    )
-            elif result1:
-                differences.append(
-                    f"Item {i+1} is missing in second dictionary: {result1}"
-                )
-            elif result2:
-                differences.append(
-                    f"Item {i+1} is missing in first dictionary: {result2}"
-                )
-
-        return differences
-
-    def split_list_into_chunks(self, str_list, max_count):
-        chunks = []
-        current_chunk = []
-        current_length = 0
-
-        for s in str_list:
-            # 计算当前字符串的长度
-            str_length = len(s)
-            # 如果当前子列表加上新字符串后长度会超过max_count，则开始一个新的子列表
-            if current_length + str_length > max_count:
-                chunks.append(current_chunk)
-                current_chunk = []
-                current_length = 0
-            # 将字符串添加到当前子列表，并更新当前子列表的长度
-            current_chunk.append(s)
-            current_length += str_length
-
-        # 添加最后一个子列表（如果有）
-        if current_chunk:
-            chunks.append(current_chunk)
-
-        return chunks
-
     def zip_sub1_sub2(self, sub1, sub2) -> Dict[str, str]:
         """
         将两个列表按照顺序合并成一个字典，如果两个列表长度不一致，则将较短的列表用 None 填充
@@ -521,41 +285,4 @@ class ZhipuEngine(TranslationEngine):
 
 
 if __name__ == "__main__":
-    translator = ZhipuEngine(
-        api_key="config/my_zhipu_api_key.json", config="my_zhipu_fy", lib_path="config"
-    )
-    translator.save_token_usage_file = "token_usage.json"
-    user_input = "Wednesday Ever since I can remember, the world has been ending somewhere.<字幕断句>Species extinction, deforestation, economic crises, environmental pollution, terrorism and climate change. Thanks a lot!<字幕断句>Pit stop? - Yes.<字幕断句>Somewhere there is always the next crisis, the next war - and mankind has but a few years left...<字幕断句>...to avert the apocalypse. You get used to it.<字幕断句>But on Slaborn? Nothing ever happens!<字幕断句>Everyone knows everyone, everyone is nice, beautiful landscape, dunes, meadows, cows, pensioners on sailboats. Boring? For sure!<字幕断句>But I\'m only fifteen and newly in love.<字幕断句>I wouldn\'t mind if we could postpone the end of the world for a while, please!<字幕断句>Where is Evelin?<字幕断句>Sorry, I\'m here.<字幕断句>Are you feeling better?<字幕断句>I don\'t know.<字幕断句>Everybody but Herm Sperm Show it! - Wait, do it again.<字幕断句>Wait. I want to film it, wait<字幕断句>Okay, you got it? - Yes.<字幕断句>Guys, guys, guys!<字幕断句>Dude, show me!<字幕断句>Enough already?<字幕断句>I\'m fine.<字幕断句>What a twatface, dude!<字幕断句>You\'re all such idiots.<字幕断句>Dude, since when does Evelin like Miscarriage?<字幕断句>What do I know? Chicks... Whatever. - Did you break up?"
-    messages = []
-    system_content = translator.config.get("system_content")
-    messages.append(
-        {
-            "role": "system",
-            "content": system_content,
-        }
-    )
-
-    user_prompt = translator.config.get("user_content_6")
-    user_prompt = user_prompt.replace("[翻译风格]", "青春期少女的风格")
-    user_prompt = user_prompt.replace("[源语言]", "英文")
-    user_prompt = user_prompt.replace("[目标语言]", "中文")
-    user_prompt = user_prompt.replace("[待翻译影视字幕]", user_input)
-
-    messages.append(
-        {
-            "role": "user",
-            "content": user_prompt,
-        }
-    )
-
-    fanyi_dict = None
-    action_match = translator.call_zhipu_action(messages)
-    result_text = None
-    if action_match is not None:
-        json_text, json_object = try_parse_json_object(action_match.group(1).strip())
-        if json_object is not None:
-            result_text = json_object["s翻s译s结s果s"]
-            if result_text is not None:
-                fanyi_dict, have_match = translator.make_fanyi_dict(
-                    user_input, result_text
-                )
+    pass

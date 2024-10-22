@@ -26,7 +26,7 @@ class TranslationEngine:
         raise Exception("translation().call.")
         return "error"
 
-    def make_fanyi_dict(self, source: str, fanyi_text: str):
+    def make_fanyi_dict(self, source: list, fanyi_text: list):
         """
         抽象函数 制作翻译词典
 
