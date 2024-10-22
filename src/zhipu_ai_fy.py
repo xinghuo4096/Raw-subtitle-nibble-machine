@@ -85,6 +85,7 @@ class ZhipuEngine(TranslationEngine):
         have_match = False
         summary_text = ""
         style_text = ""
+        user_lines = user_input.split("\n")
         try:
             messages = self.generate_story_summary_prompt(user_input, messages)
             summary_text = self.get_story_summary(messages)
@@ -195,7 +196,7 @@ class ZhipuEngine(TranslationEngine):
                 action_match.group(1).strip()
             )
             if json_object is not None:
-                result_text = json_object["s翻s译s结s果s"].split("\n")
+                result_text = json_object["s翻s译s结s果s"]
                 if result_text is not None:
                     fanyi_dict, have_match = self.make_fanyi_dict(
                         user_input, result_text
@@ -356,7 +357,7 @@ class ZhipuEngine(TranslationEngine):
 
         # 执行比较
         source_lines = origina.split("\n")
-        translation_lines = translation
+        translation_lines = translation.split("\n")
         if len(translation_lines) != len(source_lines):
             have_match = False
             logger.warning(
@@ -520,4 +521,41 @@ class ZhipuEngine(TranslationEngine):
 
 
 if __name__ == "__main__":
-    pass
+    translator = ZhipuEngine(
+        api_key="config/my_zhipu_api_key.json", config="my_zhipu_fy", lib_path="config"
+    )
+    translator.save_token_usage_file = "token_usage.json"
+    user_input = "Wednesday Ever since I can remember, the world has been ending somewhere.<字幕断句>Species extinction, deforestation, economic crises, environmental pollution, terrorism and climate change. Thanks a lot!<字幕断句>Pit stop? - Yes.<字幕断句>Somewhere there is always the next crisis, the next war - and mankind has but a few years left...<字幕断句>...to avert the apocalypse. You get used to it.<字幕断句>But on Slaborn? Nothing ever happens!<字幕断句>Everyone knows everyone, everyone is nice, beautiful landscape, dunes, meadows, cows, pensioners on sailboats. Boring? For sure!<字幕断句>But I\'m only fifteen and newly in love.<字幕断句>I wouldn\'t mind if we could postpone the end of the world for a while, please!<字幕断句>Where is Evelin?<字幕断句>Sorry, I\'m here.<字幕断句>Are you feeling better?<字幕断句>I don\'t know.<字幕断句>Everybody but Herm Sperm Show it! - Wait, do it again.<字幕断句>Wait. I want to film it, wait<字幕断句>Okay, you got it? - Yes.<字幕断句>Guys, guys, guys!<字幕断句>Dude, show me!<字幕断句>Enough already?<字幕断句>I\'m fine.<字幕断句>What a twatface, dude!<字幕断句>You\'re all such idiots.<字幕断句>Dude, since when does Evelin like Miscarriage?<字幕断句>What do I know? Chicks... Whatever. - Did you break up?"
+    messages = []
+    system_content = translator.config.get("system_content")
+    messages.append(
+        {
+            "role": "system",
+            "content": system_content,
+        }
+    )
+
+    user_prompt = translator.config.get("user_content_6")
+    user_prompt = user_prompt.replace("[翻译风格]", "青春期少女的风格")
+    user_prompt = user_prompt.replace("[源语言]", "英文")
+    user_prompt = user_prompt.replace("[目标语言]", "中文")
+    user_prompt = user_prompt.replace("[待翻译影视字幕]", user_input)
+
+    messages.append(
+        {
+            "role": "user",
+            "content": user_prompt,
+        }
+    )
+
+    fanyi_dict = None
+    action_match = translator.call_zhipu_action(messages)
+    result_text = None
+    if action_match is not None:
+        json_text, json_object = try_parse_json_object(action_match.group(1).strip())
+        if json_object is not None:
+            result_text = json_object["s翻s译s结s果s"]
+            if result_text is not None:
+                fanyi_dict, have_match = translator.make_fanyi_dict(
+                    user_input, result_text
+                )
