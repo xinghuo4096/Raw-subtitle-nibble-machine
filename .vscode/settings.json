@@ -22,7 +22,7 @@
     },
     "diffEditor.codeLens": true
   },
-  "files.autoSave": "afterDelay",
+  "files.autoSave": "onFocusChange",
   "editor.fontSize": 16,
   "python.createEnvironment.contentButton": "show",
   "python.missingPackage.severity": "Information",

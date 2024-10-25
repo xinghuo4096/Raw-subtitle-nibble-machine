@@ -17,9 +17,7 @@ class TranslationEngine:
     ):
         pass
 
-    def translate(
-        self, text, from_language, to_language, sleep_time=0
-    ) -> Dict[str, str] | None:
+    def translate(self, text, from_language, to_language, sleep_time=0):
         """
         抽象函数,不用abc.abstractmethod
         """

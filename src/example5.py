@@ -114,10 +114,8 @@ from Srt import Srt, merge_ass_tofile
 from clear_subtitle import (
     clear_subtile_fun1,
     clear_subtile_fun2,
-    make_subtile_glossary_fun1,
-    make_subtile_glossary_fun2,
 )
-from double_language_subtitle import make_double_lanague_subtitle
+from double_language_subtitle_ai import make_double_lanague_subtitle
 from zhipu_ai_fy import ZhipuEngine
 
 
@@ -159,27 +157,19 @@ def main_batch2():
             if fext == "srt" and sub_ext == sub_type:
                 clear_subtile_fun1(f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
                 clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
-                make_subtile_glossary_fun1(
-                    f"{fname}.en.3.srt", f"{fname}.en.4.srt", "../indata/glossary.txt"
-                )
-
                 make_double_lanague_subtitle(
                     media=f"movie {fname}",
-                    from_sub=f"{fname}.en.4.srt",
+                    from_sub=f"{fname}.en.3.srt",
                     to_sub=f"{fname}.cn.1.srt",
-                    err_text=f"{fname}.err.txt",
-                    dict_text=f"{fname}.dict.txt",
                     translate_engner=translator,
                     messagefun=translator.zhipuai_subtitle_message,
-                    use_dict=False,
                     from_language="en",
                     to_language="zh-CN",
+                    max_package_size=2000,
                 )
-                make_subtile_glossary_fun2(
-                    f"{fname}.cn.1.srt", f"{fname}.cn.2.srt", "../indata/glossary.txt"
-                )
+
                 merge_ass_tofile(
-                    first_subtitle_fname=f"{fname}.cn.2.srt",
+                    first_subtitle_fname=f"{fname}.cn.1.srt",
                     second_subtitle_fname=f"{fname}.en.3.srt",
                     new_subtitle_fname=f"{fname}.cnen.ass",
                     unalign_subtitle_fname=f"{fname}.unalgin.txt",

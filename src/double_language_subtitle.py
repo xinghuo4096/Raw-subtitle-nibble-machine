@@ -4,6 +4,7 @@ import os
 import traceback
 from typing import Dict
 
+import zhipuai
 from Srt import save_srt
 
 from rsnm_log import LogColors, setup_logging
@@ -75,13 +76,52 @@ def make_double_lanague_subtitle(
 
     sub = movie1.subtitles[0]
     assert isinstance(sub, Subtitle)
-    sub.make_sentence()
-    textlist = sub.get_sentences_text()
+    textpack = []
 
-    textpack = Translator.make_fanyi_packge(
-        full_sentences=textlist, engine=translate_engner, string_max=max_package_size
-    )
-    textpack = [s.strip() for s in textpack if s.strip()]
+    match t_engine.__class__.__name__:
+        case "BaiduEngine":
+            sub.make_sentence()
+            textlist = sub.get_sentences_text()
+
+            textpack = Translator.make_fanyi_packge(
+                full_sentences=textlist,
+                engine=translate_engner,
+                string_max=max_package_size,
+            )
+            textpack = [s.strip() for s in textpack if s.strip()]
+        case "ZhipuEngine":
+            max_count = 2048
+
+            # 初始化一个空列表来存储结果
+            result = []
+            # 初始化一个临时字符串来存储当前段落的总长度
+            current_length = 0
+            # 初始化一个临时列表来存储当前段落
+            current_segment = []
+
+            # 遍历subblocks中的每个subblock
+            for subblock in sub.subblocks:
+                # 将subblock转换为字符串并计算其长度
+                subblock_str = str(subblock)
+                subblock_str_length = len(subblock_str)
+                # 如果当前段落加上这个subblock的字符串长度不会超过max_count，则添加到当前段落
+                if current_length + subblock_str_length + 1 <= max_count:
+                    current_segment.append(subblock_str)
+                    current_length += subblock_str_length + 1
+                else:
+                    # 否则，将当前段落添加到结果列表，并开始一个新的段落
+                    result.append("\n".join(current_segment))
+                    current_segment = []
+                    current_segment.append(subblock_str)
+                    current_length = subblock_str_length
+                    # 重置当前长度，并加上分隔符的长度
+
+            # 不要忘记添加最后一个段落，如果它不为空
+            if current_segment:
+                result.append("\n".join(current_segment))
+
+            textpack = result
+            print(textpack)
 
     fdict: Dict[str, str] = {}
     if use_dict:
@@ -93,6 +133,7 @@ def make_double_lanague_subtitle(
         pack_count = 0
         for item in textpack:
             savefilename = f"{media}.{len(textpack)}.{pack_count}.txt"
+            err_savefilename = f"{media}.{len(textpack)}.{pack_count}.err.txt"
             logger.info(
                 f"{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}"
             )
@@ -119,6 +160,7 @@ def make_double_lanague_subtitle(
                         f"翻译失败，{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}，请检查日志翻译引擎放回的错误信息：\n"
                         f"{LogColors.RESET_COLOR.value}"
                     )
+                    save_file(err_savefilename, item)
                 else:
                     fanyi_dict = fanyiret
                     # 保存文件savefilename
