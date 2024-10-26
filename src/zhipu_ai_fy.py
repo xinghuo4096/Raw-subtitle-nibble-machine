@@ -201,17 +201,6 @@ class ZhipuEngine(TranslationEngine):
                 to_language = "中文"
 
             result_text = self.call_zhipu_ai(user_input, from_language, to_language)
-            result_srt = load_srt_from_str(str(result_text).encode("utf-8"))
-            user_srt = load_srt_from_str(str(user_input).encode("utf-8"))
-            if len(result_srt) != len(user_srt):
-                logger.error(
-                    f"{LogColors.ERROR.value}"
-                    f"翻译结果与原文行数不一致，{len(result_srt)}"
-                    f"!= {len(user_srt)}请检查翻译结果\n"
-                    f"原文：{user_input}\n翻译结果：{result_text}\n"
-                    f"{LogColors.RESET_COLOR.value}"
-                )
-                result_text = None
 
         except Exception as e:
             # 显示出错堆栈和行号

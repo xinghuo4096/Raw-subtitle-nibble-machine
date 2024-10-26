@@ -149,42 +149,47 @@ def main_batch2():
     flist = os.listdir(".")
     i = 1
     for item in flist:
-        if os.path.isfile(item):
-            fname = item[: -(3 + 2 + len(sub_type))]
-            sub_ext = item[-(4 + len(sub_type)) : -4]
-            fext = item[-3:]
+        try:
+            if os.path.isfile(item):
+                fname = item[: -(3 + 2 + len(sub_type))]
+                sub_ext = item[-(4 + len(sub_type)) : -4]
+                fext = item[-3:]
 
-            if fext == "srt" and sub_ext == sub_type:
-                clear_subtile_fun1(f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
-                clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
-                make_double_lanague_subtitle(
-                    media=f"movie {fname}",
-                    from_sub=f"{fname}.en.3.srt",
-                    to_sub=f"{fname}.cn.1.srt",
-                    translate_engner=translator,
-                    messagefun=translator.zhipuai_subtitle_message,
-                    from_language="en",
-                    to_language="zh-CN",
-                    max_package_size=2000,
-                )
+                if fext == "srt" and sub_ext == sub_type:
+                    clear_subtile_fun1(f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
+                    clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
 
-                merge_ass_tofile(
-                    first_subtitle_fname=f"{fname}.cn.1.srt",
-                    second_subtitle_fname=f"{fname}.en.3.srt",
-                    new_subtitle_fname=f"{fname}.cnen.ass",
-                    unalign_subtitle_fname=f"{fname}.unalgin.txt",
-                    ass_template_fname=os.path.join(
-                        "../indata", "ass_template_cn_en_1920.txt"
-                    ),
-                    ass_head_fname=("../indata" "/ass_head_cn_en_1920.txt"),
-                    mark1="",
-                    mark2="",
-                    mini_time=Srt.MINI_MERGE_TIME,
-                    max_cnsubtitle=26,
-                )
+                    make_double_lanague_subtitle(
+                        media=f"movie {fname}",
+                        from_sub=f"{fname}.en.3.srt",
+                        to_sub=f"{fname}.cn.1.srt",
+                        translate_engner=translator,
+                        messagefun=translator.zhipuai_subtitle_message,
+                        from_language="en",
+                        to_language="zh-CN",
+                        max_package_size=2000,
+                    )
 
-                print(i, "ok.", fname)
-                i = i + 1
+                    merge_ass_tofile(
+                        first_subtitle_fname=f"{fname}.cn.1.srt",
+                        second_subtitle_fname=f"{fname}.en.3.srt",
+                        new_subtitle_fname=f"{fname}.cnen.ass",
+                        unalign_subtitle_fname=f"{fname}.unalgin.txt",
+                        ass_template_fname=os.path.join(
+                            "../indata", "ass_template_cn_en_1920.txt"
+                        ),
+                        ass_head_fname=("../indata" "/ass_head_cn_en_1920.txt"),
+                        mark1="",
+                        mark2="",
+                        mini_time=Srt.MINI_MERGE_TIME,
+                        max_cnsubtitle=26,
+                    )
+
+                    print(i, "ok.", fname)
+                    i = i + 1
+        except Exception as e:
+            print(i, "error.", fname, e)
+            i = i + 1
 
 
 if __name__ == "__main__":
