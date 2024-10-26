@@ -6,3 +6,4 @@ config/my_zhipu_fy.py  filter=git-crypt diff=git-crypt
 config/mykeys.json filter=git-crypt diff=git-crypt
 config/my_zhipu_api_key.json filter=git-crypt diff=git-crypt
 config/my_zhipu_fy.config.json filter=git-crypt diff=git-crypt
+config/test2.txt filter=git-crypt diff=git-crypt
