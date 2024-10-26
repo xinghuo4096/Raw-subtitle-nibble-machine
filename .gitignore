@@ -130,11 +130,5 @@ dmypy.json
 
 outdata/*
 indata/a12.en.srt
-#
-# config/my_zhipu_fy.py
-# config/mykeys.json
-# config/my_zhipu_api_key.json
-# config/my_zhipu_fy.config.json
-#
 translation.json
 token_usage.json
