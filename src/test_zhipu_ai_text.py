@@ -143,3 +143,24 @@ Hi.
 0:37:28,320 --> 0:37:31,40
 How do we know you're not a snitch?- A what?
 """
+user_input4 = """
+417
+0:34:9,240 --> 0:34:10,880
+What'?
+- I know what is happening
+
+418
+0:34:10,960 --> 0:34:11,960
+in that hospital.
+"""
+
+user_input5 = """
+552
+0:45:25,160 --> 0:45:27,680
+we have allocated you, the
+residents, into groups according
+
+553
+0:45:27,760 --> 0:45:28,800
+to blood test results.
+"""

@@ -149,13 +149,13 @@ def main_batch2():
     flist = os.listdir(".")
     i = 1
     for item in flist:
-        try:
-            if os.path.isfile(item):
-                fname = item[: -(3 + 2 + len(sub_type))]
-                sub_ext = item[-(4 + len(sub_type)) : -4]
-                fext = item[-3:]
+        if os.path.isfile(item):
+            fname = item[: -(3 + 2 + len(sub_type))]
+            sub_ext = item[-(4 + len(sub_type)) : -4]
+            fext = item[-3:]
 
-                if fext == "srt" and sub_ext == sub_type:
+            if fext == "srt" and sub_ext == sub_type:
+                try:
                     clear_subtile_fun1(f"{fname}.{sub_type}.srt", f"{fname}.en.2.srt")
                     clear_subtile_fun2(f"{fname}.en.2.srt", f"{fname}.en.3.srt")
 
@@ -170,6 +170,24 @@ def main_batch2():
                         max_package_size=2000,
                     )
 
+                    print(f"make_double_lanague_subtitle.OK.    {i:03d}-{fname},")
+                except Exception as e:
+                    print(
+                        f"make_double_lanague_subtitle.Error. {i:03d}-{fname},{e},make_double_lanague_subtitle"
+                    )
+
+                i = i = 1
+
+    flist = os.listdir(".")
+    i = 1
+    for item in flist:
+        if os.path.isfile(item):
+            fname = item[: -(3 + 2 + len(sub_type))]
+            sub_ext = item[-(4 + len(sub_type)) : -4]
+            fext = item[-3:]
+
+            if fext == "srt" and sub_ext == sub_type:
+                try:
                     merge_ass_tofile(
                         first_subtitle_fname=f"{fname}.cn.1.srt",
                         second_subtitle_fname=f"{fname}.en.3.srt",
@@ -184,12 +202,11 @@ def main_batch2():
                         mini_time=Srt.MINI_MERGE_TIME,
                         max_cnsubtitle=26,
                     )
+                    print(f"merge_ass_tofile.OK.    {i:03d}-{fname}")
+                except Exception as e:
+                    print(f"merge_ass_tofile.Error. {i:03d}-{fname},{e}")
 
-                    print(i, "ok.", fname)
-                    i = i + 1
-        except Exception as e:
-            print(i, "error.", fname, e)
-            i = i + 1
+                i = i + 1
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ def subtitle_message(
 
     text1 = f'total time: {message} sec,endtime:{
         time1.strftime("%Y-%m-%d %H:%M:%S")}'
-    logger.info(text1)
+    print(text1)
     return
 
 
@@ -190,16 +190,18 @@ def make_double_lanague_subtitle(
                         pack_count,
                         sleep_time,
                     )
+
                     fanyiret = t_engine.translate(
                         item, from_language, to_language, sleep_time
                     )
+
                     if fanyiret:
                         # 有结果，保存文件savefilename
                         save_file(savefilename, fanyiret)
                     else:
-                        logger.warning(
-                            f"{LogColors.WARNING.value}"
-                            f"翻译失败，{LogColors.INFO.value}{media},翻译第{pack_count}组，共{len(textpack)}组{LogColors.RESET_COLOR.value}，请检查日志翻译引擎放回的错误信息：\n"
+                        logger.error(
+                            f"{LogColors.ERROR.value}"
+                            f"翻译失败，{media},翻译第{pack_count}组，共{len(textpack)}组"
                             f"{LogColors.RESET_COLOR.value}"
                         )
                         save_file(err_savefilename, item)
@@ -217,22 +219,20 @@ def make_double_lanague_subtitle(
                     else:
                         logger.error(
                             f"{LogColors.ERROR.value}"
-                            f"翻译结果与原文行数不一致，{len(user_srt)}-{len(result_srt)}，请检查翻译结果文件:{savefilename}\n"
+                            f"翻译结果与原文行数不一致，{len(user_srt)}-{len(result_srt)}，请检查翻译结果文件:{savefilename}"
                             f"{LogColors.RESET_COLOR.value}"
                         )
-                        err_list.append(err_savefilename)
+                        err_list.append(savefilename)
 
                 pack_count += 1
 
             if len(err_list) > 0:
-                logger.warning(
-                    f"{LogColors.WARNING.value}翻译失败，有{len(err_list)}个错误，{'\n'.join(err_list)}检查错误文件和log文件：\n"
+                logger.error(
+                    f"{LogColors.ERROR.value}"
+                    f"翻译失败，有{len(err_list)}个错误，检查错误文件和log文件。\n{'\n'.join(err_list)}"
                     f"{LogColors.RESET_COLOR.value}"
                 )
-                for err in err_list:
-                    logger.warning(
-                        f"{LogColors.WARNING.value}{err}{LogColors.RESET_COLOR.value}"
-                    )
+
                 # 要抛出异常，让调用者处理，要修复字幕文件
                 raise Exception(
                     "翻译失败，有错误，请检查错误文件和log文件，需要修复字幕文件，详见readme里修复部分"

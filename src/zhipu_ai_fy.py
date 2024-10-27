@@ -242,7 +242,7 @@ class ZhipuEngine(TranslationEngine):
         finally_time = (zhipu_ai_time + sleep_time) * (textpack - timecount)
 
         time1 = datetime.datetime.now() + datetime.timedelta(seconds=finally_time)
-        logger.info(
+        print(
             f'{LogColors.INFO.value}'
             f"{timecount} total time: {total_time} sec, "
             f"finally time: {finally_time} sec,"

@@ -25,7 +25,7 @@ default_logging_conf = {
     },
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "WARNING",
             "class": "logging.StreamHandler",
             "formatter": "detailed",
             "stream": "ext://sys.stdout",
