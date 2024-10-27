@@ -103,7 +103,9 @@ def make_packs(sub: Subtitle, max_package_size: int):
         result = [x.strip() for x in result if x.strip()]
 
         # 将结果写入新的文件中
+        # itme里要把srt的\N 处理为正常的换行\n
         for index, item in enumerate(result):
+            item = item.replace("\\N", "\n")
             newfilename = f"{base_name}.pack.{index:03d}.txt"
             with open(newfilename, "w", encoding="utf-8") as f:
                 f.write(item)

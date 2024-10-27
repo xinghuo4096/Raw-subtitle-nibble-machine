@@ -164,3 +164,8 @@ residents, into groups according
 0:45:27,760 --> 0:45:28,800
 to blood test results.
 """
+
+user_input6 = """10
+0:4:53,0 --> 0:4:56,68
+起来，收拾东西，赶紧的！\n我们得走了，要转移！
+"""
