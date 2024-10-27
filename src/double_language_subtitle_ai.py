@@ -190,7 +190,7 @@ def make_double_lanague_subtitle(
                         pack_count,
                         sleep_time,
                     )
-
+                    # translate错误处理原则，捕获所有错误，返回结果。
                     fanyiret = t_engine.translate(
                         item, from_language, to_language, sleep_time
                     )
@@ -199,6 +199,7 @@ def make_double_lanague_subtitle(
                         # 有结果，保存文件savefilename
                         save_file(savefilename, fanyiret)
                     else:
+                        # 错误处理原则，保存文件err_savefilename，继续
                         logger.error(
                             f"{LogColors.ERROR.value}"
                             f"翻译失败，{media},翻译第{pack_count}组，共{len(textpack)}组"

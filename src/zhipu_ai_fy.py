@@ -83,6 +83,11 @@ class ZhipuEngine(TranslationEngine):
             raise Exception(f"加载配置文件时发生错误：{e}")
 
     def call_zhipu_ai(self, user_text, from_language, to_language):
+        """
+        调用智谱AI进行,服务层，出错重试3次，后抛出错误。
+
+        """
+
         messages = []
         result_text = None
 
@@ -105,6 +110,8 @@ class ZhipuEngine(TranslationEngine):
                     f"traceback:{traceback.format_exc()}\n"
                     f"{LogColors.RESET_COLOR.value}"
                 )
+        if not result_text:
+            raise Exception("翻译结果为空，翻译失败，请检查日志。")
         return result_text
 
     def generate_translation_prompt(self, user_text, from_language, to_language):
@@ -150,13 +157,19 @@ class ZhipuEngine(TranslationEngine):
                         f"调用ai返回内容有问题，未找到匹配的结果，请查看日志里返回的response内容。{result_content}\n"
                         f"{LogColors.RESET_COLOR.value}"
                     )
+                    raise Exception(
+                        "调用ai返回内容有问题，未找到匹配的结果，请查看日志里返回的response内容。"
+                    )
 
         except Exception as e:
             logger.error(
                 f"{LogColors.ERROR.value}"
-                f"call_zhipu进行翻译，请检查输入内容是否正确，错误信息：{e}\n"
+                f"generate_translationc出错，请检查输入内容是否正确，错误信息：{e}\n"
                 f"traceback:{traceback.format_exc()}\n"
                 f"{LogColors.RESET_COLOR.value}"
+            )
+            raise Exception(
+                "generate_translationc出错，请检查输入内容是否正确，错误信息：{e}"
             )
 
         return result_text
@@ -185,7 +198,7 @@ class ZhipuEngine(TranslationEngine):
         self, user_input, from_language, to_language, sleep_time=5
     ) -> str | None:
         """
-        zhipu ai翻译
+        zhipu ai翻译，出错处理原则，捕获所有错误，记录日志。
         :param user_input: 用户输入
         :param from_language: 源语言
         :param to_language: 目标语言
